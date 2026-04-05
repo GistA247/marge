@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedienungsanleitung — Schweißgeräte Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        html { scroll-behavior: smooth; }
+        .section-anchor { scroll-margin-top: 60px; }
+        kbd {
+            display: inline-block;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-bottom-color: #475569;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.78em;
+            font-family: monospace;
+            color: #94a3b8;
+        }
+        .badge {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .metric-box {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+        .callout {
+            border-left: 3px solid;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            margin: 12px 0;
+        }
+        .callout-blue { border-color: #3B82F6; background: rgba(59,130,246,0.07); }
+        .callout-amber { border-color: #F59E0B; background: rgba(245,158,11,0.07); }
+        .callout-green { border-color: #10B981; background: rgba(16,185,129,0.07); }
+        .callout-red   { border-color: #EF4444; background: rgba(239,68,68,0.07); }
+        details > summary { cursor: pointer; list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary .chevron { transform: rotate(90deg); }
+        .chevron { display: inline-block; transition: transform 0.2s; }
+        h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; color: #f1f5f9; }
+        h3 { font-size: 0.95rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.4rem; color: #cbd5e1; }
+        p  { color: #94a3b8; font-size: 0.875rem; line-height: 1.65; margin-bottom: 0.6rem; }
+        li { color: #94a3b8; font-size: 0.875rem; line-height: 1.65; }
+        strong { color: #e2e8f0; }
+        a { color: #60a5fa; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        nav a.active { color: #93c5fd; background: rgba(59,130,246,0.15); border-left-color: #3B82F6 !important; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+<header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-5 py-3 flex items-center gap-4">
+    <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xs text-white">SW</div>
+        <div class="leading-tight">
+            <div class="text-sm font-semibold">Bedienungsanleitung</div>
+            <div class="text-xs text-slate-500">Schweißgeräte Preis- &amp; Margenanalyse</div>
+        </div>
+    </div>
+    <div class="flex-1"></div>
+    <span class="text-xs text-slate-600">Demo · Stand Apr 2026</span>
+    <a href="index.html"
+       class="text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-blue-500 rounded px-3 py-1.5 transition-colors">
+        ← Zurück zum Dashboard
+    </a>
+</header>
+
+<!-- ═══ LAYOUT ════════════════════════════════════════════════ -->
+<div class="flex">
+
+    <!-- ── LEFT NAV ────────────────────────────────────────── -->
+    <nav id="sidebar"
+         class="w-56 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-slate-800 py-4 bg-slate-900/40">
+        <div class="px-4 pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Inhalt</div>
+        <a href="#ueberblick"   class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">01</span>Überblick</a>
+        <a href="#glossar"      class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">02</span>Glossar</a>
+        <a href="#navigation"   class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">03</span>Navigation</a>
+        <a href="#filter"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">04</span>Filter &amp; Sidebar</a>
+        <a href="#dashboard"    class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">05</span>Dashboard</a>
+        <a href="#detail"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">06</span>Artikel-Detail</a>
+        <a href="#vergleich"    class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">07</span>Vergleich</a>
+        <a href="#portfolio"    class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">08</span>Portfolio-Analyse</a>
+        <a href="#verkauf"      class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">09</span>Verkaufszahlen</a>
+        <a href="#szenarien"    class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">10</span>Szenarien</a>
+        <a href="#tipps"        class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">11</span>Tipps &amp; Tricks</a>
+    </nav>
+
+    <!-- ── MAIN CONTENT ───────────────────────────────────── -->
+    <main class="flex-1 px-8 py-8 max-w-3xl space-y-16">
+
+        <!-- ════ 01 ÜBERBLICK ════════════════════════════════ -->
+        <section id="ueberblick" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">01</span>
+                <h2>Überblick</h2>
+            </div>
+            <p>Das <strong>Schweißgeräte Preis- &amp; Margenanalyse-Dashboard</strong> ist ein interaktives Analyse-Werkzeug für ein fiktives Schweißgeräte-Sortiment. Es visualisiert Einkaufspreise, Verkaufspreise, Margen, Verkaufszahlen und Lagerbestand über einen Zeitraum von drei Jahren (Jan 2023 – Dez 2025).</p>
+            <p>Das Tool eignet sich für Einkaufs-, Vertriebs- und Category-Manager, die Margendruck erkennen, saisonale Muster verstehen und das Portfolio auf einen Blick bewerten wollen.</p>
+
+            <div class="grid grid-cols-3 gap-3 mt-4">
+                <div class="metric-box text-center">
+                    <div class="text-2xl font-bold text-blue-400">35</div>
+                    <div class="text-xs text-slate-500 mt-1">Artikel gesamt</div>
+                    <div class="text-xs text-slate-600">20 Einzel + 15 SET</div>
+                </div>
+                <div class="metric-box text-center">
+                    <div class="text-2xl font-bold text-emerald-400">3 J.</div>
+                    <div class="text-xs text-slate-500 mt-1">Datenumfang</div>
+                    <div class="text-xs text-slate-600">Jan 2023 – Dez 2025</div>
+                </div>
+                <div class="metric-box text-center">
+                    <div class="text-2xl font-bold text-purple-400">4</div>
+                    <div class="text-xs text-slate-500 mt-1">Analyseansichten</div>
+                    <div class="text-xs text-slate-600">Dashboard · Detail · Vergleich · Portfolio</div>
+                </div>
+            </div>
+
+            <h3>Datenbasis</h3>
+            <p>Alle Daten sind synthetisch generiert und enthalten fünf realistische Preisszenarien (Margenkompression, Überreaktion VK, Saisonalität, Stabile Premium, Volatile Niedrigmarge). Verkaufszahlen werden täglich deterministisch berechnet — d.h. gleiche Eingabe = gleiche Ausgabe, kein echter Zufallsfaktor.</p>
+
+            <div class="callout callout-blue mt-4">
+                <strong>Demo-Modus:</strong> Das Dashboard ist eine Single-File-Anwendung ohne Backend. Alle Berechnungen laufen direkt im Browser. Es werden keine Daten nach außen übertragen.
+            </div>
+        </section>
+
+        <!-- ════ 02 GLOSSAR ══════════════════════════════════ -->
+        <section id="glossar" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">02</span>
+                <h2>Glossar</h2>
+            </div>
+            <p>Das Dashboard verwendet durchgehend diese Kennzahlen und Begriffe:</p>
+
+            <div class="space-y-3 mt-2">
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-amber-400 hover:bg-slate-800/50 transition-colors">
+                        <span>EK — Einkaufspreis</span>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p>Der Netto-Einkaufspreis, den der Händler beim Lieferanten zahlt. EK-Änderungen werden im Preisentwicklungs-Chart als <strong class="text-amber-400">gelbe Markierungslinien</strong> dargestellt. Mehrere EK-Stufen über die Zeit modellieren Preiserhöhungen durch den Lieferanten.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-blue-400 hover:bg-slate-800/50 transition-colors">
+                        <span>VK — Verkaufspreis</span>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p>Der Netto-Endkundenpreis. VK-Änderungen erscheinen als <strong class="text-blue-400">blaue Markierungslinien</strong>. Die Differenz zwischen VK und EK ergibt die absolute Marge.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-emerald-400 hover:bg-slate-800/50 transition-colors">
+                        <span>Mark-up % (Aufschlag auf EK)</span>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p>Prozentualer Aufschlag auf den Einkaufspreis:</p>
+                        <div class="metric-box mt-2 font-mono text-sm text-slate-300">
+                            Mark-up = (VK − EK) / EK × 100
+                        </div>
+                        <p class="mt-2">Beispiel: EK = 200 €, VK = 350 € → Mark-up = <strong class="text-emerald-400">75 %</strong></p>
+                        <p>Im Dashboard wird Mark-up standardmäßig als primäre Margenkennzahl verwendet. Die Farbkodierung:</p>
+                        <div class="flex gap-2 mt-2">
+                            <span class="badge" style="background:#022c22;color:#6ee7b7">≥ 50 % grün</span>
+                            <span class="badge" style="background:#451a03;color:#fcd34d">30–49 % gelb</span>
+                            <span class="badge" style="background:#450a0a;color:#fca5a5">&lt; 30 % rot</span>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-purple-400 hover:bg-slate-800/50 transition-colors">
+                        <span>Handelsspanne % (Anteil am VK)</span>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p>Prozentualer Rohertrag am Verkaufspreis — aus Kundenperspektive:</p>
+                        <div class="metric-box mt-2 font-mono text-sm text-slate-300">
+                            Handelsspanne = (VK − EK) / VK × 100
+                        </div>
+                        <p class="mt-2">Beispiel: EK = 200 €, VK = 350 € → Handelsspanne = <strong class="text-purple-400">42,9 %</strong></p>
+                        <p>Handelsspanne ist immer kleiner als der Mark-up. Bei sehr engen Margen nähern sich beide Werte an.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800/50 transition-colors">
+                        <span>Marge abs. — Absolute Marge</span>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p>Euro-Betrag pro verkaufter Einheit: <strong>VK − EK</strong>. Gibt den tatsächlichen Deckungsbeitrag I pro Stück an. Hochwertartikel mit kleinem Mark-up können durch hohe absolute Marge dennoch attraktiv sein.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium" style="color:#c4b5fd">
+                        <span>SET-Artikel</span>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p>SET-Artikel bündeln ein Hauptgerät mit Zubehörteilen zu einem Paket. Die 15 SET-Artikel (SW-021 bis SW-035) basieren jeweils auf einem der 20 Einzelartikel als <em>Hauptartikel</em>.</p>
+                        <p>Der Preis eines SET-Artikels entspricht dem Preis des Hauptartikels multipliziert mit einem festen Faktor (1,55× bis 1,92×), der die enthaltenen Komponenten widerspiegelt. Die Preishistorie des SET-Artikels folgt exakt den Änderungsterminen des Hauptartikels.</p>
+                        <p>In der Sidebar und in den Charts sind SET-Artikel mit dem lila Badge <span class="badge" style="background:#2e1065;color:#c4b5fd">SET</span> markiert. Der Typ-Filter (Alle / Einzel / SET) ermöglicht es, die Analyse auf einen der beiden Typen zu beschränken.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-red-400 hover:bg-slate-800/50 transition-colors">
+                        <span>Lagerausfallquote</span>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p>Anteil der Tage im gewählten Zeitraum, an denen der Artikel <strong>nicht lieferbar</strong> war (kein Lagerbestand). An diesen Tagen sind Umsatz und Verkaufsmengen automatisch null.</p>
+                        <div class="flex gap-2 mt-2">
+                            <span class="badge" style="background:#022c22;color:#6ee7b7">≤ 15 % grün (gut)</span>
+                            <span class="badge" style="background:#451a03;color:#fcd34d">15–25 % amber</span>
+                            <span class="badge" style="background:#450a0a;color:#fca5a5">&gt; 25 % rot (kritisch)</span>
+                        </div>
+                        <p class="mt-2">Im Durchschnitt sind die Artikel ca. 20 % der Zeit ohne Bestand — Lagerausfälle treten in zusammenhängenden Blöcken von 7–21 Tagen auf (Nachbestelllücken).</p>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- ════ 03 NAVIGATION ═══════════════════════════════ -->
+        <section id="navigation" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">03</span>
+                <h2>Navigation</h2>
+            </div>
+            <p>Das Dashboard besteht aus einem <strong>Header</strong> mit globalen Steuerelementen und vier <strong>Ansichten</strong>, die über die Tab-Navigation erreichbar sind.</p>
+
+            <h3>Header-Tabs</h3>
+            <div class="grid grid-cols-4 gap-2 mt-2">
+                <div class="metric-box text-center">
+                    <div class="text-xs font-semibold text-blue-400 mb-1">Dashboard</div>
+                    <div class="text-xs text-slate-500">Portfolio-Überblick, KPIs, Ranking</div>
+                </div>
+                <div class="metric-box text-center">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Artikel-Detail</div>
+                    <div class="text-xs text-slate-500">Tiefenanalyse eines einzelnen Artikels</div>
+                </div>
+                <div class="metric-box text-center">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Vergleich</div>
+                    <div class="text-xs text-slate-500">Bis zu 5 Artikel nebeneinander</div>
+                </div>
+                <div class="metric-box text-center">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Portfolio</div>
+                    <div class="text-xs text-slate-500">Aggregierte Analyse, Heatmap</div>
+                </div>
+            </div>
+
+            <h3>Zeitraum-Schnellfilter (Header rechts)</h3>
+            <p>Die vier Buttons <strong>3M / 6M / 1J / 3J</strong> setzen den analysierten Zeitraum relativ zum Ende des Datensatzes (31.12.2025). Der aktive Filter wird blau hervorgehoben. Alle Charts und KPIs aktualisieren sich sofort.</p>
+
+            <div class="callout callout-amber">
+                <strong>Hinweis:</strong> Die Zeitraum-Buttons im Header und die manuellen Datumsfelder in der Sidebar sind synchronisiert — eine Änderung an einem Ort überschreibt die andere Einstellung.
+            </div>
+
+            <h3>Navigation per Klick in der Artikelliste</h3>
+            <p>Ein Klick auf einen Artikel in der linken Sidebar oder in der Top/Flop-Tabelle des Dashboards öffnet automatisch die <strong>Artikel-Detail-Ansicht</strong> mit diesem Artikel vorausgewählt.</p>
+        </section>
+
+        <!-- ════ 04 FILTER & SIDEBAR ═════════════════════════ -->
+        <section id="filter" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">04</span>
+                <h2>Filter &amp; Sidebar</h2>
+            </div>
+            <p>Die linke Seitenleiste enthält alle globalen Filter. Jede Änderung aktualisiert sofort alle sichtbaren Charts und Kennzahlen.</p>
+
+            <h3>Zeitraum (von / bis)</h3>
+            <p>Manuelle Datumseingabe für den Analysezeitraum. Format: <kbd>YYYY-MM-DD</kbd>. Der Datenbereich des Dashboards umfasst 01.01.2023 bis 31.12.2025.</p>
+
+            <h3>Kategorien</h3>
+            <p>Die fünf Produktkategorien des Sortiments lassen sich einzeln ein- oder ausblenden. Rechts neben jeder Kategorie steht die Anzahl der Artikel. Der Farbpunkt ist konsistent durch alle Charts:</p>
+            <div class="flex flex-wrap gap-2 mt-2">
+                <span class="badge" style="background:#1e3a5f;color:#93c5fd">MIG/MAG</span>
+                <span class="badge" style="background:#2e1065;color:#d8b4fe">WIG/TIG</span>
+                <span class="badge" style="background:#451a03;color:#fcd34d">Elektrode</span>
+                <span class="badge" style="background:#083344;color:#67e8f9">Plasma</span>
+                <span class="badge" style="background:#022c22;color:#6ee7b7">Multi</span>
+            </div>
+
+            <h3>Marge-Schwelle (Slider, 0–100 %)</h3>
+            <p>Filtert Artikel heraus, deren aktueller Mark-up unter dem eingestellten Schwellenwert liegt. Die verbleibenden Artikel erscheinen in der Sidebar-Liste, im Ranking-Chart und in den Portfolio-Charts. Nützlich, um sich auf Artikel mit kritischer Marge zu konzentrieren.</p>
+
+            <div class="callout callout-amber">
+                <strong>Achtung:</strong> Ein hoher Schwellenwert kann alle Artikel herausfiltern und leere Charts erzeugen. Slider auf 0 zurücksetzen, um alle Artikel wieder anzuzeigen.
+            </div>
+
+            <h3>Gleitender Durchschnitt</h3>
+            <p>Schaltet den gleitenden Ø Mark-up im <strong>Margenentwicklungs-Chart</strong> (Artikel-Detail) ein oder aus. Die Periode ist wählbar: <strong>7T / 30T / 90T</strong>. Der Umschalter ist ein Toggle-Button (blau = aktiv).</p>
+
+            <h3>Artikeltyp-Filter</h3>
+            <p>Drei Modi: <strong>Alle</strong> zeigt das gesamte Sortiment. <strong>Einzel</strong> schließt alle SET-Artikel aus. <strong>SET</strong> zeigt nur gebündelte Pakete. Der Filter wirkt auf alle Charts und die Artikelliste.</p>
+
+            <h3>Ranking-Sortierung (nur Dashboard)</h3>
+            <p>Erscheint nur im Dashboard-View. Bestimmt, nach welcher Kennzahl die Artikel im Ranking-Chart und in der Top/Flop-Tabelle sortiert werden:</p>
+            <ul class="list-disc list-inside space-y-1 mt-1">
+                <li><strong>Mark-up %</strong> — Aufschlag auf EK (Standard)</li>
+                <li><strong>Handelsspanne %</strong> — Anteil am VK</li>
+                <li><strong>Marge absolut</strong> — Euro-Betrag pro Stück</li>
+            </ul>
+
+            <h3>Artikelliste (unten in der Sidebar)</h3>
+            <p>Zeigt alle gefilterten Artikel mit Kategorie-Farbpunkt, Name, ID, SET-Badge und aktuellem Mark-up in Farbe. Artikel können direkt angeklickt werden, um in die Detailansicht zu springen. Der aktive Artikel ist blau hinterlegt.</p>
+        </section>
+
+        <!-- ════ 05 DASHBOARD ════════════════════════════════ -->
+        <section id="dashboard" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">05</span>
+                <h2>Dashboard-Übersicht</h2>
+            </div>
+            <p>Die Startansicht des Dashboards fasst das gesamte Portfolio auf einen Blick zusammen.</p>
+
+            <h3>KPI-Karten (vier Kacheln oben)</h3>
+            <div class="space-y-3">
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-emerald-400 mb-1">Höchste Marge</div>
+                    <p class="mb-0">Der Artikel mit dem aktuell höchsten Mark-up im gefilterten Sortiment. Zeigt Namen, aktuellen EK und VK. Klickbar → öffnet Detailansicht.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-red-400 mb-1">Niedrigste Marge</div>
+                    <p class="mb-0">Der Artikel mit dem niedrigsten aktuellen Mark-up. Dieser Artikel verdient besondere Aufmerksamkeit, besonders wenn er unter der Marge-Schwelle liegt.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-blue-400 mb-1">Ø Portfolio Mark-up</div>
+                    <p class="mb-0">Ungewichteter Durchschnitt des aktuellen Mark-up aller gefilterten Artikel. Darunter: Ø Handelsspanne, Ø Marge absolut und die <strong class="text-amber-400">Lagerausfallquote</strong> (Ø Anteil der Tage ohne Bestand).</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-amber-400 mb-1">Preisänderungen (letzte 30 T.)</div>
+                    <p class="mb-0">Anzahl aller EK- und VK-Preisänderungen im gesamten Sortiment innerhalb der letzten 30 Tage des gewählten Zeitraums. Aufgeteilt in EK- und VK-Änderungen.</p>
+                </div>
+            </div>
+
+            <h3>Portfolio-Trendchart</h3>
+            <p>Zeitreihe des <strong>Ø Mark-up aller gefilterten Artikel</strong> über den gewählten Zeitraum. Datenpunkt = monatliches Mittel. Die grüne Fläche unter der Linie zeigt die Entwicklung des gesamten Portfolios auf einen Blick.</p>
+            <p><strong>DataZoom:</strong> Unterhalb des Charts befindet sich ein Zoom-Schieberegler. Der Bereich kann auch mit dem Mausrad gezoomt und per Drag verschoben werden.</p>
+
+            <h3>Ø Mark-up je Kategorie</h3>
+            <p>Horizontales Balkendiagramm mit dem aktuellen Durchschnitts-Mark-up pro Kategorie, sortiert absteigend. Farben entsprechen den Kategorie-Farben aus der Sidebar.</p>
+
+            <h3>Artikel-Ranking</h3>
+            <p>Alle gefilterten Artikel sortiert nach der in der Sidebar gewählten Kennzahl. Die Balkenlänge entspricht dem Wert, die Farbe gibt die Margenqualität an (grün / amber / rot). Die Sortierung kann jederzeit in der Sidebar umgeschaltet werden.</p>
+
+            <h3>Top &amp; Flop 5 (Tabelle rechts)</h3>
+            <p>Die fünf besten und fünf schlechtesten Artikel nach aktuell gewählter Sortierung. Jede Zeile enthält einen <strong>Sparkline-Graphen</strong> der letzten 365 Tage — ein Miniaturbild der Margenentwicklung. Klick öffnet die Detailansicht.</p>
+        </section>
+
+        <!-- ════ 06 ARTIKEL-DETAIL ════════════════════════════ -->
+        <section id="detail" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">06</span>
+                <h2>Artikel-Detail</h2>
+            </div>
+            <p>Die Detailansicht analysiert <strong>einen Artikel</strong> in voller Tiefe. Zugang: Tab "Artikel-Detail" oder Klick auf einen Artikel in der Sidebar / Top-Flop-Tabelle.</p>
+
+            <h3>Artikel-Auswahl</h3>
+            <p>Das Dropdown oben zeigt alle 35 Artikel (ID + Name). Wechseln des Artikels aktualisiert sofort alle Charts und Statistiken. Die Breadcrumb-Navigation "← Dashboard" führt zurück zur Übersicht.</p>
+
+            <h3>Header-Karte</h3>
+            <p>Zeigt Kategorie-Badge, SET-Badge (falls zutreffend), Artikel-ID, Leistung in kW und das Szenario-Label (falls vorhanden). Rechts die vier aktuellen KPIs: EK, VK, Mark-up und Handelsspanne.</p>
+
+            <h3>SET-Zusammensetzung</h3>
+            <p>Nur bei SET-Artikeln sichtbar: Alle Komponenten mit ihrem Anteil am Haupt-EK. Komponenten mit eigener Artikel-ID (Hauptgeräte) sind blau markiert, Zubehör ohne ID grau. Die Statistik bezieht sich immer auf den Gesamtartikelpreis, nicht auf Einzelkomponenten.</p>
+
+            <h3>Preisentwicklungs-Chart (links)</h3>
+            <p>Zeitreihe mit drei Linien: <strong class="text-blue-400">VK (blau)</strong>, <strong class="text-amber-400">EK (gelb)</strong>, <strong class="text-emerald-400">Marge absolut (grün)</strong>. Vertikale Markierungslinien zeigen exakt, wann sich EK oder VK geändert haben. Nützlich, um Margenlücken nach EK-Erhöhungen zu erkennen.</p>
+
+            <h3>Margenentwicklungs-Chart (rechts)</h3>
+            <p>Zeitreihe in Prozent: <strong class="text-blue-400">Mark-up % (blau, durchgezogen)</strong>, <strong style="color:#A855F7">Handelsspanne % (lila, gestrichelt)</strong> und optional der <strong class="text-emerald-400">gleitende Ø (grün, gepunktet)</strong>. Der MA-Zeitraum (7/30/90 T.) wird in der Sidebar gesteuert.</p>
+
+            <h3>Statistik-Box</h3>
+            <p>Tabelle mit aggregierten Werten für den gewählten Zeitraum:</p>
+            <div class="grid grid-cols-2 gap-2 mt-2 text-xs">
+                <div class="metric-box space-y-1">
+                    <div class="text-slate-500 font-semibold mb-1">Preisstatistik</div>
+                    <div class="flex justify-between"><span class="text-slate-500">Ø Mark-up</span><span class="font-mono text-slate-300">Durchschnitt im Zeitraum</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Min / Max</span><span class="font-mono text-slate-300">Extremwerte des Mark-up</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Standardabw.</span><span class="font-mono text-slate-300">Volatilität in Prozentpunkten</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Trend</span><span class="font-mono text-slate-300">Steigung der Regressionsgerade</span></div>
+                </div>
+                <div class="metric-box space-y-1">
+                    <div class="text-slate-500 font-semibold mb-1">Verkauf &amp; Lager</div>
+                    <div class="flex justify-between"><span class="text-slate-500">Verkaufte Einh.</span><span class="font-mono text-slate-300">Gesamte Stück im Zeitraum</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Lagerausfallquote</span><span class="font-mono text-slate-300">% Tage ohne Bestand</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Umsatz</span><span class="font-mono text-slate-300">Stück × VK, kumuliert</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Rohertrag</span><span class="font-mono text-slate-300">Stück × Marge abs., kumuliert</span></div>
+                </div>
+            </div>
+
+            <h3>Preisänderungs-Tabelle</h3>
+            <p>Chronologische Liste aller historischen EK- und VK-Stufen mit Datum, Preis und Delta zur vorherigen Stufe (Δ in €). Ermöglicht einen schnellen Überblick über die Preishistorie des Artikels.</p>
+
+            <h3>Ereignis-Analyse</h3>
+            <p>Für jede Preisänderung im Zeitraum: Gegenüberstellung des <strong>Ø Mark-up 30 Tage vor</strong> vs. <strong>30 Tage nach</strong> der Änderung. Grüne Balken zeigen Verbesserung, rote Verschlechterung. Besonders aufschlussreich bei EK-Erhöhungen: Hat der Händler den VK rechtzeitig angepasst?</p>
+
+            <h3>Verkaufszahlen &amp; Lagerbestand</h3>
+            <p>Der neue Chart am Ende der Detailansicht zeigt <strong>wöchentliche Verkaufsmengen in Stück</strong> als blaue Balken. <strong class="text-red-400">Rote Bereiche</strong> markieren Perioden ohne Lagerbestand — dort sind die Balken null oder fehlen. Details zum Thema Verkaufszahlen im Abschnitt <a href="#verkauf">09 Verkaufszahlen</a>.</p>
+        </section>
+
+        <!-- ════ 07 VERGLEICH ════════════════════════════════ -->
+        <section id="vergleich" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">07</span>
+                <h2>Vergleichsansicht</h2>
+            </div>
+            <p>Die Vergleichsansicht stellt bis zu <strong>5 Artikel gleichzeitig</strong> in einem Chart dar. Ideal, um Margenentwicklungen verschiedener Artikel oder Kategorien direkt zu vergleichen.</p>
+
+            <h3>Artikel auswählen</h3>
+            <p>Im Auswahlbereich sind alle 35 Artikel als Buttons aufgelistet (Kategorie-Punkt, Artikel-ID, Name). Angeklickte Artikel werden blau markiert und in den Chart aufgenommen. Ein weiterer Klick entfernt den Artikel wieder. Ab 5 ausgewählten Artikeln werden die übrigen Buttons deaktiviert.</p>
+
+            <h3>Vergleichsmodi</h3>
+            <div class="space-y-3 mt-2">
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Absolut (Mark-up %)</div>
+                    <p class="mb-0">Jede Linie zeigt den tatsächlichen Mark-up des Artikels im Zeitverlauf. Direkte Vergleichbarkeit der absoluten Margenposition.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Normalisiert (Index = 100)</div>
+                    <p class="mb-0">Alle Linien starten bei 100 (= Wert am Anfang des Zeitraums). Zeigt die <strong>relative Veränderung</strong> in Prozent, unabhängig vom absoluten Niveau. Nützlich, wenn Artikel sehr unterschiedliche Margenlevels haben.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Δ Portfolio-Ø</div>
+                    <p class="mb-0">Zeigt die <strong>Abweichung</strong> jedes Artikels vom Durchschnitt aller gefilterten Artikel. Positive Werte = besser als Portfolio-Ø, negative = schlechter. Ideal zur Erkennung von Ausreißern.</p>
+                </div>
+            </div>
+
+            <div class="callout callout-blue mt-4">
+                <strong>Tipp:</strong> Der Vergleichsmodus wird durch die Zeitraum-Filter der Sidebar beeinflusst. Engerer Zeitraum = mehr Detail; 3J = längster Überblick.
+            </div>
+        </section>
+
+        <!-- ════ 08 PORTFOLIO-ANALYSE ════════════════════════ -->
+        <section id="portfolio" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">08</span>
+                <h2>Portfolio-Analyse</h2>
+            </div>
+            <p>Die Portfolio-Ansicht bietet vier aggregierte Charts für das gesamte gefilterte Sortiment.</p>
+
+            <h3>Margenverteilung (Histogramm)</h3>
+            <p>Balkendiagramm, das zeigt, wie viele Artikel aktuell in welches Mark-up-Intervall fallen. Die Bins (<em class="text-slate-400">Eimergrenzen</em>) sind: &lt;20 %, 20–30 %, 30–40 %, 40–50 %, 50–70 %, 70–100 %, &gt;100 %. Farbe pro Bin: rot (niedrig) → blau → grün (hoch). Nützlich, um die Margenstruktur des Portfolios zu verstehen.</p>
+
+            <h3>Kategorien-Vergleich</h3>
+            <p>Gruppierte Balken pro Kategorie: <strong>Ø Mark-up</strong> (volle Sättigung) und <strong>Ø Handelsspanne</strong> (halbe Sättigung) nebeneinander. Zeigt, welche Kategorien strukturell margenstarker sind.</p>
+
+            <h3>Monats-Heatmap</h3>
+            <p>Matrix aus Artikeln (Y-Achse) × Monaten (X-Achse). Jede Zelle enthält den Ø Mark-up dieses Artikels in diesem Monat. Die Farbskala reicht von dunkel (niedrige Marge) über grün bis hellgrün (hohe Marge). Die <strong>visualMap-Legende</strong> rechts zeigt die Skala; sie ist verschiebbar (Drag).</p>
+            <p>Auf einen Blick erkennbar: saisonale Rabatt-Aktionen (Spalten mit abrupt niedrigeren Werten), EK-Schocks (Zeilen, die ab einem Datum dunkler werden) und dauerhaft margenstarke oder -schwache Artikel.</p>
+
+            <h3>Volatilitäts-Ranking</h3>
+            <p>Alle Artikel sortiert nach der <strong>Standardabweichung des Mark-up</strong> im gewählten Zeitraum. Grüne Balken = stabile Marge (Stddev &lt; 2 pp), amber = moderat (2–5 pp), rot = volatil (&gt; 5 pp). Volatile Artikel erfordern häufigere Preisanpassungen.</p>
+        </section>
+
+        <!-- ════ 09 VERKAUFSZAHLEN ════════════════════════════ -->
+        <section id="verkauf" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">09</span>
+                <h2>Verkaufszahlen &amp; Lagerbestand</h2>
+            </div>
+            <p>Das Dashboard enthält simulierte Verkaufszahlen und Lagerbestandsinformationen für jeden Artikel. Diese Daten werden algorithmisch und <strong>deterministisch</strong> generiert — gleiche Artikelnummer und gleicher Zeitraum ergeben immer exakt dieselben Werte.</p>
+
+            <h3>Modell der Verkaufszahlen</h3>
+            <p>Die tägliche Verkaufsmenge eines Artikels hängt von drei Faktoren ab:</p>
+            <ol class="list-decimal list-inside space-y-1.5 mt-2">
+                <li><strong>Preis-Tier:</strong> Günstigere Artikel (VK &lt; 300 €) verkaufen sich häufiger als teure (VK &gt; 1.200 €).</li>
+                <li><strong>Saisonalität:</strong> Schweißgeräte werden in den Wintermonaten (Okt–März) stärker nachgefragt (+35 %), im Sommer (Apr–Jul) schwächer (−25 %).</li>
+                <li><strong>Wochentag:</strong> Montag bis Freitag höhere Nachfrage als Wochenende (Samstag: 50 %, Sonntag: 15 % des Werktags).</li>
+            </ol>
+
+            <h3>Lagerausfallmodell</h3>
+            <p>Für jeden Artikel werden <strong>Lagerausfallperioden</strong> generiert, die zusammenhängend 7 bis 21 Tage dauern. Der Ziel-Anteil liegt bei <strong>ca. 20 % der Tage</strong> ohne Bestand. An Ausfallstagen ist die Verkaufsmenge automatisch null.</p>
+            <div class="callout callout-amber">
+                Die Lagerausfallperioden variieren je nach Artikel (verschiedene Seeds), sodass nicht alle Artikel gleichzeitig ausfallen. Die Perioden sind gleichmäßig über den Gesamtzeitraum verteilt.
+            </div>
+
+            <h3>Wo sehe ich die Verkaufszahlen?</h3>
+            <ul class="list-disc list-inside space-y-1.5 mt-2">
+                <li><strong>Dashboard, KPI-Karte 3:</strong> Ø Lagerausfallquote des gesamten gefilterten Portfolios.</li>
+                <li><strong>Artikel-Detail, Statistik-Box:</strong> Verkaufte Einheiten, Lagerausfallquote, Umsatz und Rohertrag für den gewählten Zeitraum.</li>
+                <li><strong>Artikel-Detail, Verkaufszahlen-Chart:</strong> Wöchentlich aggregierte Verkaufsmengen als Balkendiagramm mit roten Bereichen für Lagerausfälle.</li>
+            </ul>
+
+            <h3>Interpretation des Verkaufszahlen-Charts</h3>
+            <div class="grid grid-cols-2 gap-3 mt-2">
+                <div class="metric-box">
+                    <div class="text-xs text-blue-400 font-semibold mb-1">Blaue Balken</div>
+                    <p class="mb-0 text-xs">Wöchentliche Verkaufsmengen in Stück. Schwankungen zwischen Wochen zeigen saisonale und wochentägliche Variation.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs text-red-400 font-semibold mb-1">Rote Bereiche (Lagerausfall)</div>
+                    <p class="mb-0 text-xs">Perioden ohne Lagerbestand. Balken in diesen Bereichen sind null. Jede solche Periode entspricht einem Nachbestelllücken-Block.</p>
+                </div>
+            </div>
+            <p class="mt-3">Der DataZoom-Schieberegler unter dem Chart ermöglicht das Vergrößern einzelner Zeitabschnitte.</p>
+        </section>
+
+        <!-- ════ 10 SZENARIEN ════════════════════════════════ -->
+        <section id="szenarien" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">10</span>
+                <h2>Szenarien im Detail</h2>
+            </div>
+            <p>Bestimmte Artikel repräsentieren typische Preis- und Margenszenarien aus der Praxis. Das Szenario-Label erscheint im Artikel-Detail-Header. Folgende fünf Szenarien sind eingebaut:</p>
+
+            <div class="space-y-3 mt-3">
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-red-400 hover:bg-slate-800/50 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
+                            Margenkompression
+                        </div>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p><strong>Artikel:</strong> SW-002 (ProWeld 200 MIG), SW-022 (Set)</p>
+                        <p>Der EK stieg um +19 % (Juli 2024), während der VK zunächst nur geringfügig angehoben wurde. Die Marge bricht ein und wird erst im Oktober 2024 durch eine deutliche VK-Erhöhung wieder stabilisiert. Typisch für Rohstoffpreisschübe ohne zeitnahe Weitergabe.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-amber-400 hover:bg-slate-800/50 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                            Überreaktion VK
+                        </div>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p><strong>Artikel:</strong> SW-007, SW-025 (Set)</p>
+                        <p>Der VK wurde stark erhöht, obwohl der EK stabil blieb. Die Marge steigt stark an — was kurzfristig attraktiv wirkt, aber das Risiko birgt, preissensible Kunden zu verlieren. Die Ereignis-Analyse zeigt die deutliche Margenverschiebung nach der VK-Änderung.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-blue-400 hover:bg-slate-800/50 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                            Saisonales Muster
+                        </div>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p><strong>Artikel:</strong> SW-003, SW-016, SW-023, SW-030 (Set)</p>
+                        <p>Der VK wird im Sommer (Mai–September) aktiv gesenkt, um in der schwächeren Saison den Abverkauf zu fördern. Das erzeugt ein regelmäßiges Wellenmuster in der Margenentwicklung, gut sichtbar in der Monats-Heatmap des Portfolio-Views.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-emerald-400 hover:bg-slate-800/50 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                            Stabile Premium-Marge
+                        </div>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p><strong>Artikel:</strong> SW-019, SW-020, SW-033, SW-034</p>
+                        <p>Hochwertige Multiprocessor-Geräte mit konstant hoher Marge (&gt; 70 % Mark-up) und geringer Volatilität. EK und VK steigen im Gleichschritt jährlich leicht an. Erscheinen dauerhaft in der Top-5-Liste und haben niedrige Standardabweichung im Volatilitäts-Ranking.</p>
+                    </div>
+                </details>
+
+                <details class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+                    <summary class="flex items-center justify-between px-4 py-3 text-sm font-medium text-red-400 hover:bg-slate-800/50 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
+                            Volatile Niedrigmarge
+                        </div>
+                        <span class="chevron text-slate-500 text-xs">&#9654;</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800">
+                        <p><strong>Artikel:</strong> SW-004, SW-015, SW-024</p>
+                        <p>Einstiegsgeräte mit häufigen VK-Schwankungen (Aktionspreise, Wettbewerbsanpassungen) und steigendem EK. Die Marge schwankt stark zwischen &lt; 30 % und &gt; 50 %, was im Volatilitäts-Ranking zu den höchsten Stddev-Werten führt. Im Margenentwicklungs-Chart gut sichtbar.</p>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- ════ 11 TIPPS & TRICKS ════════════════════════════ -->
+        <section id="tipps" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">11</span>
+                <h2>Tipps &amp; Tricks</h2>
+            </div>
+
+            <h3>Effektiver Workflow</h3>
+            <ol class="list-decimal list-inside space-y-2 mt-1">
+                <li>Starten Sie im <strong>Dashboard</strong> mit dem 1J-Filter, um die aktuelle Situation zu sehen.</li>
+                <li>Schauen Sie in die <strong>Top &amp; Flop 5</strong>: Welche Artikel sind überraschend weit oben oder unten?</li>
+                <li>Klicken Sie in der Flop-5-Liste auf Artikel mit kritischer Marge → <strong>Detail-View</strong> zeigt, wann und warum die Marge sank.</li>
+                <li>Nutzen Sie die <strong>Ereignis-Analyse</strong>, um zu sehen, ob VK-Anpassungen nach EK-Erhöhungen rechtzeitig und ausreichend waren.</li>
+                <li>Wechseln Sie zum <strong>Vergleich (Δ Portfolio-Ø Mode)</strong>, um zu sehen, welche Artikel dauerhaft unter dem Durchschnitt liegen.</li>
+                <li>Im <strong>Portfolio-View, Heatmap</strong>: Saisonale Artikel sind an regelmäßigen Farbwechseln in bestimmten Spalten erkennbar.</li>
+            </ol>
+
+            <h3>Chart-Interaktion</h3>
+            <ul class="list-disc list-inside space-y-1.5 mt-1">
+                <li><strong>Zoom:</strong> Mausrad über einem Chart mit DataZoom, oder Schieberegler darunter bewegen.</li>
+                <li><strong>Pan:</strong> Im gezoomten Bereich mit der Maus drücken und ziehen.</li>
+                <li><strong>Tooltip:</strong> Mauszeiger über die Chart-Fläche bewegen — Details zum jeweiligen Datenpunkt erscheinen.</li>
+                <li><strong>Legende:</strong> Klick auf einen Legendeneintrag blendet die zugehörige Serie ein/aus.</li>
+                <li><strong>Zoom zurücksetzen:</strong> Doppelklick auf die Chart-Fläche setzt Zoom zurück.</li>
+            </ul>
+
+            <h3>Filter-Kombinationen</h3>
+            <div class="space-y-2 mt-2">
+                <div class="callout callout-green">
+                    <strong>Saisonale Analyse:</strong> Zeitraum auf einen Sommer (Mai–Aug) einschränken, dann Heatmap anschauen — alle Saisonal-Artikel fallen sofort auf.
+                </div>
+                <div class="callout callout-blue">
+                    <strong>SET vs. Einzel:</strong> Artikeltyp-Filter wechseln und Portfolio-Trendchart vergleichen — SET-Artikel haben oft stabilere Margen als ihre Einzelgeräte.
+                </div>
+                <div class="callout callout-red">
+                    <strong>Marge-Schwelle:</strong> Slider auf 30 % setzen, um nur Artikel über dieser Schwelle zu sehen. Die Artikelanzahl in Klammern (Sidebar) zeigt, wie viele herausgefiltert wurden.
+                </div>
+                <div class="callout callout-amber">
+                    <strong>Lagerausfälle im Kontext:</strong> Verkaufszahlen-Chart aufrufen und gleichzeitig Margenentwicklung beobachten — Lagerausfallperioden können vorübergehend die Durchschnittsmargen verzerren, wenn nur hochmargige Artikel betroffen sind.
+                </div>
+            </div>
+
+            <h3>Bekannte Einschränkungen (Demo)</h3>
+            <ul class="list-disc list-inside space-y-1 mt-1 text-slate-500 text-sm">
+                <li>Kein Export (CSV, PNG) — ist für eine spätere Phase geplant.</li>
+                <li>Kein Alerting bei Unterschreiten der Marge-Schwelle.</li>
+                <li>Filter werden nicht im Browser gespeichert (kein LocalStorage).</li>
+                <li>Mobile-Ansicht ist eingeschränkt — optimiert für Desktop-Bildschirme.</li>
+                <li>Verkaufszahlen sind simulierte Demo-Daten, keine echten ERP-Daten.</li>
+            </ul>
+
+        </section>
+
+        <!-- Footer -->
+        <div class="border-t border-slate-800 pt-6 pb-12 text-center">
+            <a href="index.html" class="text-sm text-slate-400 hover:text-white border border-slate-700 hover:border-blue-500 rounded px-4 py-2 transition-colors">
+                ← Zurück zum Dashboard
+            </a>
+            <div class="text-xs text-slate-700 mt-4">Schweißgeräte Dashboard · Demo · Stand Apr 2026</div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+// ── Scroll-Spy: highlight active nav link based on scroll position ──
+(function() {
+    const links = document.querySelectorAll('.nav-link');
+    const sectionIds = Array.from(links).map(l => l.getAttribute('href').slice(1));
+
+    function getActive() {
+        const scrollY = window.scrollY + 80;
+        let active = sectionIds[0];
+        for (const id of sectionIds) {
+            const el = document.getElementById(id);
+            if (el && el.offsetTop <= scrollY) active = id;
+        }
+        return active;
+    }
+
+    function update() {
+        const active = getActive();
+        links.forEach(l => {
+            const isActive = l.getAttribute('href') === '#' + active;
+            l.classList.toggle('active', isActive);
+            l.style.borderLeftColor = isActive ? '#3B82F6' : 'transparent';
+        });
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+})();
+</script>
+
+</body>
+</html>

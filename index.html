@@ -63,6 +63,10 @@
     </div>
 
     <div class="text-xs text-slate-600 shrink-0">Demo · Stand Apr 2026</div>
+    <a href="anleitung.html" target="_blank"
+       class="text-xs text-slate-500 hover:text-slate-200 border border-slate-700 hover:border-slate-500 rounded px-2.5 py-1 transition-colors shrink-0">
+        ? Anleitung
+    </a>
 </header>
 
 <!-- ═══════════════════════════════════════════════
@@ -258,6 +262,12 @@
                         <div class="flex justify-between text-xs">
                             <span class="text-slate-500">Ø Marge abs.</span>
                             <span class="text-slate-300 font-mono" x-text="kpiAvgAbsMargin.toFixed(0) + ' €'"></span>
+                        </div>
+                        <div class="flex justify-between text-xs pt-0.5 border-t border-slate-800/60">
+                            <span class="text-slate-500">Lagerausfallquote</span>
+                            <span class="font-mono"
+                                  :class="kpiAvgStockoutRate > 25 ? 'text-red-400' : kpiAvgStockoutRate > 15 ? 'text-amber-400' : 'text-emerald-400'"
+                                  x-text="kpiAvgStockoutRate.toFixed(1) + '%'"></span>
                         </div>
                     </div>
                 </div>
@@ -495,6 +505,28 @@
                                 <span class="text-slate-500">Datenpunkte</span>
                                 <span class="font-mono text-slate-500" x-text="detailStats.n + ' Tage'"></span>
                             </div>
+                            <!-- Verkauf & Lager -->
+                            <div class="col-span-2 pt-1.5 mt-0.5 border-t border-slate-700">
+                                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Verkauf &amp; Lager</span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Verkaufte Einh.</span>
+                                <span class="font-mono text-slate-200" x-text="detailStats.totalUnits.toLocaleString('de-DE') + ' Stk.'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Lagerausfallquote</span>
+                                <span class="font-mono"
+                                      :class="detailStats.stockoutRate > 25 ? 'text-red-400' : detailStats.stockoutRate > 15 ? 'text-amber-400' : 'text-emerald-400'"
+                                      x-text="detailStats.stockoutRate.toFixed(1) + '%'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Umsatz (Zeitraum)</span>
+                                <span class="font-mono text-slate-200" x-text="detailStats.totalRevenue.toLocaleString('de-DE') + ' €'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Rohertrag (Zeitraum)</span>
+                                <span class="font-mono text-emerald-400" x-text="detailStats.totalGrossProfit.toLocaleString('de-DE') + ' €'"></span>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -542,6 +574,13 @@
                 <h3 class="text-sm font-semibold mb-1">Ereignis-Analyse</h3>
                 <p class="text-xs text-slate-500 mb-3">Ø Mark-up 30 Tage vor vs. 30 Tage nach jeder Preisänderung</p>
                 <div id="chart-event-impact" class="echart h-44"></div>
+            </div>
+
+            <!-- Verkaufszahlen & Lagerbestand -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold mb-1">Verkaufszahlen &amp; Lagerbestand</h3>
+                <p class="text-xs text-slate-500 mb-3">Wöchentliche Verkaufsmengen (Stk.) · Rote Bereiche = kein Lagerbestand</p>
+                <div id="chart-sales" class="echart h-52"></div>
             </div>
         </div>
 
@@ -1246,6 +1285,33 @@ const ARTIKEL = [
 // DATA ENGINE
 // ════════════════════════════════════════════════════════════
 
+// ── Seeded LCG pseudo-random number generator ──
+function makeLCG(seed) {
+    let s = (seed >>> 0) || 1;
+    return function() {
+        s = (Math.imul(1664525, s) + 1013904223) | 0;
+        return (s >>> 0) / 0x100000000;
+    };
+}
+
+// ── Generate set of stock-out day indices (~20 % of total days) ──
+// Uses contiguous blocks of 7–21 days, deterministic per article.
+function buildStockoutSet(artikelId, startDate, endDate) {
+    const num = parseInt(artikelId.replace('SW-', ''), 10) || 1;
+    const rng = makeLCG(num * 7919);
+    const total = Math.round((new Date(endDate) - new Date(startDate)) / 86400000) + 1;
+    const target = Math.round(total * 0.20);
+    const out = new Set();
+    while (out.size < target) {
+        const from = Math.floor(rng() * total);
+        const dur  = 7 + Math.floor(rng() * 15);   // 7–21 day blocks
+        for (let d = from; d < Math.min(from + dur, total) && out.size < target; d++) {
+            out.add(d);
+        }
+    }
+    return out;
+}
+
 function getPriceOnDate(pts, dateStr) {
     let price = pts[0].preis;
     for (const p of pts) {
@@ -1262,18 +1328,46 @@ function generateDailyData(artikel, startDate, endDate) {
     const ekChanges = new Set(ekPts.map(p => p.gueltig_ab));
     const vkChanges = new Set(vkPts.map(p => p.gueltig_ab));
 
+    // Sales data: deterministic per article
+    const num        = parseInt(artikel.id.replace('SW-', ''), 10) || 1;
+    const stockoutSet = buildStockoutSet(artikel.id, startDate, endDate);
+    const salesRng   = makeLCG(num * 6271 + 99);
+
     let cur = new Date(startDate);
     const end = new Date(endDate);
+    let dayIndex = 0;
     while (cur <= end) {
-        const d = cur.toISOString().split('T')[0];
+        const d  = cur.toISOString().split('T')[0];
         const ek = getPriceOnDate(ekPts, d);
         const vk = getPriceOnDate(vkPts, d);
         const abs = Math.round((vk - ek) * 100) / 100;
         const pct = Math.round((abs / ek) * 10000) / 100;
         const hs  = Math.round((abs / vk) * 10000) / 100;
+
+        // ── Bestand & Verkauf ──────────────────────────
+        const bestand = !stockoutSet.has(dayIndex);
+        let verkauf_stueck = 0, umsatz = 0, rohertrag = 0;
+        if (bestand) {
+            // Base daily rate by price tier
+            const baseRate = vk < 300 ? 1.5 : vk < 600 ? 0.8 : vk < 1200 ? 0.35 : 0.15;
+            // Seasonal: welding peaks Oct–Mar
+            const month = cur.getMonth();
+            const seasonMult = (month >= 9 || month <= 2) ? 1.35 : (month >= 4 && month <= 7) ? 0.75 : 1.0;
+            // Weekday: Mon–Fri higher, Sat low, Sun very low
+            const dow = cur.getDay();
+            const dowMult = dow === 0 ? 0.15 : dow === 6 ? 0.50 : 1.15;
+            // Random daily variation
+            const rawSales = baseRate * seasonMult * dowMult * (0.3 + salesRng() * 1.4);
+            verkauf_stueck = Math.floor(rawSales + salesRng() * 0.9);
+            umsatz   = Math.round(verkauf_stueck * vk  * 100) / 100;
+            rohertrag = Math.round(verkauf_stueck * abs * 100) / 100;
+        }
+
         result.push({ datum: d, ek, vk, marge_abs: abs, marge_pct: pct, handelsspanne: hs,
-                      ek_change: ekChanges.has(d), vk_change: vkChanges.has(d) });
+                      ek_change: ekChanges.has(d), vk_change: vkChanges.has(d),
+                      bestand, verkauf_stueck, umsatz, rohertrag });
         cur.setDate(cur.getDate() + 1);
+        dayIndex++;
     }
     return result;
 }
@@ -1300,10 +1394,21 @@ function calcStats(daily) {
     const absV = daily.map(d => d.marge_abs);
     const avgAbs = absV.reduce((s, x) => s + x, 0) / n;
     const last = daily[n - 1];
+
+    // ── Verkaufszahlen & Lagerbestand ──────────────────────
+    const totalUnits      = daily.reduce((s, d) => s + (d.verkauf_stueck || 0), 0);
+    const totalRevenue    = Math.round(daily.reduce((s, d) => s + (d.umsatz    || 0), 0));
+    const totalGrossProfit = Math.round(daily.reduce((s, d) => s + (d.rohertrag || 0), 0));
+    const stockoutDays    = daily.filter(d => !d.bestand).length;
+    const stockoutRate    = Math.round(stockoutDays / n * 1000) / 10;
+    const avgDailySales   = stockoutDays < n
+        ? Math.round(totalUnits / (n - stockoutDays) * 100) / 100 : 0;
+
     return { n, avgMarkup: avg, minMarkup: min, maxMarkup: max, stddev: std,
              avgHS, avgAbs, trend: slope,
              currentEK: last.ek, currentVK: last.vk,
-             currentMarkup: last.marge_pct, currentHS: last.handelsspanne };
+             currentMarkup: last.marge_pct, currentHS: last.handelsspanne,
+             totalUnits, totalRevenue, totalGrossProfit, stockoutRate, avgDailySales };
 }
 
 function calcMA(daily, win) {
@@ -1342,6 +1447,23 @@ function sampleMonthly(arr) {
         if (seen.has(k)) return false;
         seen.add(k); return true;
     });
+}
+
+function aggregateWeeklySales(daily) {
+    const weeks = {};
+    daily.forEach(d => {
+        const dt = new Date(d.datum);
+        const dow = dt.getDay();
+        dt.setDate(dt.getDate() + (dow === 0 ? -6 : 1 - dow)); // Monday of that week
+        const key = dt.toISOString().slice(0, 10);
+        if (!weeks[key]) weeks[key] = { units: 0, stockout_days: 0, total_days: 0 };
+        weeks[key].units += d.verkauf_stueck;
+        weeks[key].total_days++;
+        if (!d.bestand) weeks[key].stockout_days++;
+    });
+    return Object.entries(weeks)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([week, v]) => ({ week, ...v }));
 }
 
 function makeSparkline(daily) {
@@ -1468,6 +1590,13 @@ function dashboard() {
                 a.verkaufspreise.forEach(p => { if (p.gueltig_ab >= cut && p.gueltig_ab <= this.dateEnd) vk++; });
             });
             return { total: ek + vk, ek, vk };
+        },
+        get kpiAvgStockoutRate() {
+            if (!this.rankingData.length) return 0;
+            return Math.round(
+                this.rankingData.reduce((s, a) => s + (a.stats?.stockoutRate || 0), 0)
+                / this.rankingData.length * 10
+            ) / 10;
         },
 
         // ── Navigation ───────────────────────────────────
@@ -1676,6 +1805,7 @@ function dashboard() {
             this._chartPriceDetail(daily);
             this._chartMarginDetail(daily);
             this._chartEventImpact(daily);
+            this._chartSales(daily);
         },
 
         _markLines(vkPts, ekPts) {
@@ -1800,6 +1930,53 @@ function dashboard() {
                       data: events.map(e => ({ value: e.after,
                           itemStyle: { color: e.delta >= 0 ? '#10B981' : '#EF4444', borderRadius: [0,2,2,0] } })) }
                 ]
+            });
+        },
+
+        _chartSales(daily) {
+            if (!daily.length) return;
+            const weeks = aggregateWeeklySales(daily);
+
+            // Find continuous stock-out periods for mark areas
+            const areas = [];
+            let soStart = null;
+            for (const d of daily) {
+                if (!d.bestand && soStart === null) { soStart = d.datum; }
+                else if (d.bestand && soStart !== null) {
+                    areas.push([{ xAxis: soStart }, { xAxis: d.datum }]);
+                    soStart = null;
+                }
+            }
+            if (soStart !== null) areas.push([{ xAxis: soStart }, { xAxis: daily[daily.length - 1].datum }]);
+
+            this._chart('chart-sales', {
+                grid: { top: 28, right: 14, bottom: 50, left: 52 },
+                legend: { top: 0, right: 8, textStyle: { color: '#64748b', fontSize: 10 }, itemWidth: 14, itemHeight: 8 },
+                tooltip: {
+                    trigger: 'axis', backgroundColor: '#1e293b', borderColor: '#334155',
+                    textStyle: { color: '#e2e8f0', fontSize: 11 },
+                    formatter: params => {
+                        if (!params.length) return '';
+                        const w = weeks[params[0].dataIndex];
+                        const soText = w?.stockout_days > 0
+                            ? `<br/><span style="color:#f87171">Lagerausfall: ${w.stockout_days} Tag(e)</span>` : '';
+                        return `${params[0].axisValueLabel}<br/>Verkauf: <b>${params[0].data[1]} Stk.</b>${soText}`;
+                    }
+                },
+                xAxis: this._axX(),
+                yAxis: { ...this._axY(' Stk.'), name: 'Stk./Woche', minInterval: 1 },
+                dataZoom: this._zoom(),
+                series: [{
+                    name: 'Verkauf (Stk./Woche)',
+                    type: 'bar', barMaxWidth: 10,
+                    data: weeks.map(w => [w.week, w.units]),
+                    itemStyle: { color: '#3B82F6', borderRadius: [2, 2, 0, 0] },
+                    markArea: areas.length ? {
+                        silent: true,
+                        data: areas,
+                        itemStyle: { color: 'rgba(239,68,68,0.10)', borderColor: 'rgba(239,68,68,0.25)', borderWidth: 1, borderType: 'dashed' }
+                    } : {}
+                }]
             });
         },
 
