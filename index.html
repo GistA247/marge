@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schweißgeräte — Preis- &amp; Margenanalyse</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        html, body { overflow: hidden; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .echart { width: 100%; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col font-sans antialiased"
+      x-data="dashboard()" x-init="init()" x-cloak>
+
+<!-- ═══════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════ -->
+<header class="bg-slate-900 border-b border-slate-800 px-5 py-3 flex items-center gap-5 shrink-0 z-10">
+
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5 shrink-0">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xs text-white tracking-tight">SW</div>
+        <div class="leading-tight">
+            <div class="text-sm font-semibold">Schweißgeräte</div>
+            <div class="text-xs text-slate-500">Preis- &amp; Margenanalyse</div>
+        </div>
+    </div>
+
+    <!-- Nav Tabs -->
+    <nav class="flex gap-1">
+        <template x-for="tab in [{id:'dashboard',label:'Dashboard'},{id:'detail',label:'Artikel-Detail'},{id:'comparison',label:'Vergleich'},{id:'portfolio',label:'Portfolio'}]" :key="tab.id">
+            <button @click="navigateTo(tab.id)"
+                    :class="currentView === tab.id
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'"
+                    class="px-3 py-1.5 text-sm rounded-md transition-colors font-medium"
+                    x-text="tab.label"></button>
+        </template>
+    </nav>
+
+    <div class="flex-1"></div>
+
+    <!-- Quick Date Filters -->
+    <div class="flex items-center gap-1.5">
+        <span class="text-xs text-slate-500">Zeitraum:</span>
+        <template x-for="qf in [{label:'3M',months:3},{label:'6M',months:6},{label:'1J',months:12},{label:'3J',months:36}]" :key="qf.months">
+            <button @click="setQuickFilter(qf.months)"
+                    :class="activeQuickFilter === qf.months ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'"
+                    class="px-2.5 py-1 text-xs rounded transition-colors"
+                    x-text="qf.label"></button>
+        </template>
+    </div>
+
+    <div class="text-xs text-slate-600 shrink-0">Demo · Stand Apr 2026</div>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN LAYOUT
+════════════════════════════════════════════════ -->
+<div class="flex flex-1 overflow-hidden">
+
+    <!-- ════════ SIDEBAR ════════ -->
+    <aside class="w-60 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+        <div class="px-4 py-2.5 border-b border-slate-800">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filter</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+
+            <!-- Zeitraum -->
+            <div class="px-4 py-3 border-b border-slate-800 space-y-1.5">
+                <p class="text-xs text-slate-400 mb-1.5">Zeitraum</p>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-600 w-5">von</span>
+                    <input type="date" x-model="dateStart" @change="applyFilters()"
+                        class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 min-w-0">
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-600 w-5">bis</span>
+                    <input type="date" x-model="dateEnd" @change="applyFilters()"
+                        class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 min-w-0">
+                </div>
+            </div>
+
+            <!-- Kategorien -->
+            <div class="px-4 py-3 border-b border-slate-800">
+                <p class="text-xs text-slate-400 mb-2">Kategorien</p>
+                <div class="space-y-1.5">
+                    <template x-for="cat in allCategories" :key="cat">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" :value="cat" x-model="selectedCategories" @change="applyFilters()"
+                                class="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-0 focus:ring-offset-0">
+                            <span class="text-xs text-slate-300 flex-1" x-text="cat"></span>
+                            <span class="text-xs text-slate-600" x-text="getCatCount(cat)"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Marge-Schwelle -->
+            <div class="px-4 py-3 border-b border-slate-800">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs text-slate-400">Marge-Schwelle</span>
+                    <span class="text-xs font-mono text-slate-300" x-text="marginThreshold + '%'"></span>
+                </div>
+                <input type="range" x-model.number="marginThreshold" @change="applyFilters()"
+                    min="0" max="100" step="5" class="w-full accent-blue-500 h-1.5">
+                <div class="flex justify-between text-xs text-slate-700 mt-0.5">
+                    <span>0%</span><span>100%</span>
+                </div>
+            </div>
+
+            <!-- Gleitender Durchschnitt -->
+            <div class="px-4 py-3 border-b border-slate-800">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-slate-400">Gleit. Durchschnitt</span>
+                    <button @click="showMA = !showMA; applyFilters()"
+                        :class="showMA ? 'bg-blue-600' : 'bg-slate-700'"
+                        class="relative w-8 h-4 rounded-full transition-colors">
+                        <span :class="showMA ? 'translate-x-4' : 'translate-x-0.5'"
+                            class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform block"></span>
+                    </button>
+                </div>
+                <div x-show="showMA" class="flex gap-1">
+                    <template x-for="d in [7, 30, 90]" :key="d">
+                        <button @click="movingAvg = d; applyFilters()"
+                            :class="movingAvg === d ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'"
+                            class="flex-1 py-0.5 text-xs rounded transition-colors"
+                            x-text="d + 'T'"></button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Artikeltyp-Filter -->
+            <div class="px-4 py-3 border-b border-slate-800">
+                <p class="text-xs text-slate-400 mb-2">Artikeltyp</p>
+                <div class="flex gap-1">
+                    <button @click="typeFilter='alle'; applyFilters()"
+                        :class="typeFilter==='alle' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'"
+                        class="flex-1 py-0.5 text-xs rounded transition-colors">Alle</button>
+                    <button @click="typeFilter='einzel'; applyFilters()"
+                        :class="typeFilter==='einzel' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'"
+                        class="flex-1 py-0.5 text-xs rounded transition-colors">Einzel</button>
+                    <button @click="typeFilter='set'; applyFilters()"
+                        :class="typeFilter==='set' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'"
+                        class="flex-1 py-0.5 text-xs rounded transition-colors">SET</button>
+                </div>
+            </div>
+
+            <!-- Sortierung (Dashboard/Ranking) -->
+            <div x-show="currentView === 'dashboard'" class="px-4 py-3 border-b border-slate-800">
+                <p class="text-xs text-slate-400 mb-2">Ranking-Sortierung</p>
+                <div class="space-y-1">
+                    <template x-for="s in [{key:'marge_pct',label:'Mark-up %'},{key:'handelsspanne',label:'Handelsspanne %'},{key:'marge_abs',label:'Marge absolut'}]" :key="s.key">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" :value="s.key" x-model="sortBy" @change="refreshRankingChart()"
+                                class="border-slate-600 bg-slate-800 text-blue-500 focus:ring-0 focus:ring-offset-0">
+                            <span class="text-xs text-slate-300" x-text="s.label"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Artikelliste -->
+            <div class="px-3 py-3">
+                <p class="text-xs text-slate-500 mb-2 px-1">
+                    Artikel
+                    <span x-text="'(' + rankingData.length + '/' + ARTIKEL.length + ')'"></span>
+                </p>
+                <div class="space-y-0.5">
+                    <template x-for="a in rankingData" :key="a.id">
+                        <button @click="showDetail(a)"
+                            :class="selectedArtikel && selectedArtikel.id === a.id
+                                ? 'bg-blue-900/40 border-blue-700/60 text-white'
+                                : 'hover:bg-slate-800 border-transparent'"
+                            class="w-full flex items-center gap-2 px-2 py-1.5 rounded border text-left transition-colors">
+                            <div class="w-1.5 h-1.5 rounded-full shrink-0"
+                                :style="'background:' + getCatColor(a.kategorie)"></div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-medium truncate leading-tight" x-text="a.name"></div>
+                                <div class="text-xs text-slate-600 leading-tight flex items-center gap-1">
+                                    <span x-text="a.id"></span>
+                                    <span x-show="a.typ === 'set'"
+                                        style="background:#2e1065;color:#c4b5fd;padding:0 3px;border-radius:3px;font-size:9px;line-height:1.5;font-weight:600">SET</span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-mono font-semibold shrink-0"
+                                :class="a.latest.marge_pct >= 50 ? 'text-emerald-400' : a.latest.marge_pct >= 30 ? 'text-amber-400' : 'text-red-400'"
+                                x-text="a.latest.marge_pct.toFixed(0) + '%'"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ════════ CONTENT ════════ -->
+    <main class="flex-1 overflow-y-auto bg-slate-950">
+
+        <!-- ══════════════════════════════════════
+             DASHBOARD VIEW
+        ═══════════════════════════════════════ -->
+        <div x-show="currentView === 'dashboard'" class="p-5 space-y-4">
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-4 gap-4">
+
+                <!-- Höchste Marge -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <p class="text-xs text-slate-500 mb-2">Höchste Marge</p>
+                    <template x-if="kpiHighest">
+                        <div>
+                            <div class="text-2xl font-bold text-emerald-400 leading-none" x-text="kpiHighest.latest.marge_pct.toFixed(1) + '%'"></div>
+                            <div class="text-xs text-slate-300 mt-1.5 font-medium truncate" x-text="kpiHighest.name"></div>
+                            <div class="text-xs text-slate-600 mt-0.5">
+                                EK <span class="text-amber-500/80" x-text="kpiHighest.latest.ek.toFixed(0) + '€'"></span>
+                                → VK <span class="text-blue-500/80" x-text="kpiHighest.latest.vk.toFixed(0) + '€'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Niedrigste Marge -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <p class="text-xs text-slate-500 mb-2">Niedrigste Marge</p>
+                    <template x-if="kpiLowest">
+                        <div>
+                            <div class="text-2xl font-bold text-red-400 leading-none" x-text="kpiLowest.latest.marge_pct.toFixed(1) + '%'"></div>
+                            <div class="text-xs text-slate-300 mt-1.5 font-medium truncate" x-text="kpiLowest.name"></div>
+                            <div class="text-xs text-slate-600 mt-0.5">
+                                EK <span class="text-amber-500/80" x-text="kpiLowest.latest.ek.toFixed(0) + '€'"></span>
+                                → VK <span class="text-blue-500/80" x-text="kpiLowest.latest.vk.toFixed(0) + '€'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Ø Portfolio Mark-up -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <p class="text-xs text-slate-500 mb-2">Ø Portfolio Mark-up</p>
+                    <div class="text-2xl font-bold text-blue-400 leading-none" x-text="kpiAvgMarkup.toFixed(1) + '%'"></div>
+                    <div class="mt-2 space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500">Handelsspanne</span>
+                            <span class="text-slate-300 font-mono" x-text="kpiAvgHS.toFixed(1) + '%'"></span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500">Ø Marge abs.</span>
+                            <span class="text-slate-300 font-mono" x-text="kpiAvgAbsMargin.toFixed(0) + ' €'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preisänderungen -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <p class="text-xs text-slate-500 mb-2">Preisänd. (letzte 30T)</p>
+                    <div class="text-2xl font-bold text-amber-400 leading-none" x-text="kpiChanges.total"></div>
+                    <div class="mt-2 space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="flex items-center gap-1 text-slate-500">
+                                <span class="w-2 h-0.5 bg-amber-500 inline-block"></span> EK-Änderungen
+                            </span>
+                            <span class="text-amber-400/80 font-mono" x-text="kpiChanges.ek"></span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="flex items-center gap-1 text-slate-500">
+                                <span class="w-2 h-0.5 bg-blue-500 inline-block"></span> VK-Änderungen
+                            </span>
+                            <span class="text-blue-400/80 font-mono" x-text="kpiChanges.vk"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-3 gap-4">
+                <!-- Portfolio Trend (2/3) -->
+                <div class="col-span-2 bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <div class="mb-3">
+                        <h3 class="text-sm font-semibold">Portfolio-Trendchart</h3>
+                        <p class="text-xs text-slate-500">Ø Mark-up aller gefilterten Artikel · DataZoom aktiv</p>
+                    </div>
+                    <div id="chart-portfolio-trend" class="echart h-56"></div>
+                </div>
+
+                <!-- Kategorie -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-semibold mb-1">Ø Mark-up je Kategorie</h3>
+                    <p class="text-xs text-slate-500 mb-3">Aktueller Wert</p>
+                    <div id="chart-category" class="echart h-56"></div>
+                </div>
+            </div>
+
+            <!-- Ranking -->
+            <div class="grid grid-cols-3 gap-4">
+                <!-- Ranking Chart (2/3) -->
+                <div class="col-span-2 bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-sm font-semibold">Artikel-Ranking</h3>
+                            <p class="text-xs text-slate-500">Alle Artikel sortiert nach gewählter Kenngröße</p>
+                        </div>
+                    </div>
+                    <div id="chart-ranking" class="echart h-96"></div>
+                </div>
+
+                <!-- Top/Flop Tabelle (1/3) -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 flex flex-col overflow-hidden">
+                    <h3 class="text-sm font-semibold mb-3">Top &amp; Flop 5</h3>
+
+                    <div class="text-xs font-medium text-emerald-400 mb-1.5">Top 5</div>
+                    <div class="space-y-0.5 mb-4">
+                        <template x-for="(a, i) in rankingData.slice(0, 5)" :key="a.id">
+                            <button @click="showDetail(a)"
+                                class="w-full flex items-center gap-2 text-xs hover:bg-slate-800 rounded px-1.5 py-1.5 transition-colors text-left">
+                                <span class="text-slate-600 w-4 text-right shrink-0" x-text="(i+1)+'.'"></span>
+                                <span class="flex-1 truncate text-slate-200" x-text="a.name"></span>
+                                <svg class="w-14 h-5 shrink-0" viewBox="0 0 80 24" preserveAspectRatio="none">
+                                    <polyline :points="a.sparkline" fill="none" stroke="#10B981" stroke-width="1.5"/>
+                                </svg>
+                                <span class="font-mono text-emerald-400 w-11 text-right shrink-0" x-text="a.latest.marge_pct.toFixed(1)+'%'"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <div class="text-xs font-medium text-red-400 mb-1.5">Flop 5</div>
+                    <div class="space-y-0.5">
+                        <template x-for="(a, i) in rankingData.slice(-5).reverse()" :key="a.id">
+                            <button @click="showDetail(a)"
+                                class="w-full flex items-center gap-2 text-xs hover:bg-slate-800 rounded px-1.5 py-1.5 transition-colors text-left">
+                                <span class="text-slate-600 w-4 text-right shrink-0" x-text="(rankingData.length - i)+'.'"></span>
+                                <span class="flex-1 truncate text-slate-200" x-text="a.name"></span>
+                                <svg class="w-14 h-5 shrink-0" viewBox="0 0 80 24" preserveAspectRatio="none">
+                                    <polyline :points="a.sparkline" fill="none" stroke="#EF4444" stroke-width="1.5"/>
+                                </svg>
+                                <span class="font-mono text-red-400 w-11 text-right shrink-0" x-text="a.latest.marge_pct.toFixed(1)+'%'"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             DETAIL VIEW
+        ═══════════════════════════════════════ -->
+        <div x-show="currentView === 'detail'" class="p-5 space-y-4">
+
+            <!-- Breadcrumb + Selector -->
+            <div class="flex items-center gap-3">
+                <button @click="navigateTo('dashboard')"
+                    class="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
+                    ← Dashboard
+                </button>
+                <span class="text-slate-700">/</span>
+                <select x-model="selectedArtikelId" @change="changeDetailArtikel()"
+                    class="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+                    <template x-for="a in ARTIKEL" :key="a.id">
+                        <option :value="a.id" x-text="a.id + ' — ' + a.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Article Header Card -->
+            <template x-if="selectedArtikel">
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-5">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                                <span class="px-2 py-0.5 rounded text-xs font-medium"
+                                    :style="getCatBadgeStyle(selectedArtikel.kategorie)"
+                                    x-text="selectedArtikel.kategorie"></span>
+                                <span x-show="selectedArtikel.typ === 'set'"
+                                    style="background:#2e1065;color:#c4b5fd;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">SET-Artikel</span>
+                                <span class="text-xs text-slate-500 font-mono" x-text="selectedArtikel.id"></span>
+                                <span class="text-xs text-slate-500" x-text="(selectedArtikel.leistung_w/1000).toFixed(1) + ' kW'"></span>
+                                <span x-show="getDetailScenario()" class="text-xs italic text-slate-500"
+                                    x-text="getDetailScenario()"></span>
+                            </div>
+                            <h2 class="text-xl font-bold" x-text="selectedArtikel.name"></h2>
+                        </div>
+                        <template x-if="detailStats">
+                            <div class="grid grid-cols-4 gap-6 text-center shrink-0">
+                                <div>
+                                    <div class="text-xs text-slate-500">EK aktuell</div>
+                                    <div class="text-lg font-bold text-amber-400" x-text="detailStats.currentEK.toFixed(2) + ' €'"></div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-slate-500">VK aktuell</div>
+                                    <div class="text-lg font-bold text-blue-400" x-text="detailStats.currentVK.toFixed(2) + ' €'"></div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-slate-500">Mark-up</div>
+                                    <div class="text-lg font-bold"
+                                        :class="detailStats.currentMarkup >= 50 ? 'text-emerald-400' : detailStats.currentMarkup >= 30 ? 'text-amber-400' : 'text-red-400'"
+                                        x-text="detailStats.currentMarkup.toFixed(1) + '%'"></div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-slate-500">Handelsspanne</div>
+                                    <div class="text-lg font-bold text-purple-400" x-text="detailStats.currentHS.toFixed(1) + '%'"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Komponenten-Aufschlüsselung (nur für SET-Artikel) -->
+            <template x-if="selectedArtikel && selectedArtikel.typ === 'set'">
+                <div class="bg-slate-900 rounded-xl border border-purple-900/40 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span style="background:#2e1065;color:#c4b5fd;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:700">SET</span>
+                        <h3 class="text-sm font-semibold">Zusammensetzung</h3>
+                        <span class="text-xs text-slate-500 ml-1"
+                            x-text="selectedArtikel.komponenten.length + ' Komponenten · Statistik bezieht sich auf den Gesamtartikel'"></span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="k in selectedArtikel.komponenten" :key="k.name">
+                            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700/50 rounded-lg px-3 py-2">
+                                <div class="w-1.5 h-1.5 rounded-full shrink-0"
+                                    :style="k.id ? 'background:#3B82F6' : 'background:#475569'"></div>
+                                <span class="text-xs text-slate-200 font-medium" x-text="k.name"></span>
+                                <span class="text-xs text-slate-500 font-mono"
+                                    x-text="k.id ? '(Hauptartikel)' : '~' + k.anteil + '% des Haupt-EK'"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Price + Margin Charts -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-semibold">Preisentwicklung (€)</h3>
+                    <p class="text-xs text-slate-500 mb-3">EK · VK · Marge absolut | Markierungen = Preisänderungen</p>
+                    <div id="chart-price-detail" class="echart h-64"></div>
+                </div>
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-semibold">Margenentwicklung (%)</h3>
+                    <p class="text-xs text-slate-500 mb-3">Mark-up (EK-Basis) · Handelsspanne (VK-Basis) · Gleit. Ø</p>
+                    <div id="chart-margin-detail" class="echart h-64"></div>
+                </div>
+            </div>
+
+            <!-- Stats + Events Row -->
+            <div class="grid grid-cols-2 gap-4">
+
+                <!-- Statistik -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-semibold mb-3">Statistik (gewählter Zeitraum)</h3>
+                    <template x-if="detailStats">
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Ø Mark-up</span>
+                                <span class="font-mono text-slate-200" x-text="detailStats.avgMarkup.toFixed(1) + '%'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Ø Handelsspanne</span>
+                                <span class="font-mono text-slate-200" x-text="detailStats.avgHS.toFixed(1) + '%'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Min Mark-up</span>
+                                <span class="font-mono text-red-400" x-text="detailStats.minMarkup.toFixed(1) + '%'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Max Mark-up</span>
+                                <span class="font-mono text-emerald-400" x-text="detailStats.maxMarkup.toFixed(1) + '%'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Standardabw.</span>
+                                <span class="font-mono text-slate-200" x-text="'±' + detailStats.stddev.toFixed(2) + 'pp'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Ø Marge abs.</span>
+                                <span class="font-mono text-slate-200" x-text="detailStats.avgAbs.toFixed(2) + ' €'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Trend</span>
+                                <span class="font-mono"
+                                    :class="detailStats.trend > 0 ? 'text-emerald-400' : 'text-red-400'"
+                                    x-text="detailStats.trend > 0 ? '↑ steigend' : '↓ fallend'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
+                                <span class="text-slate-500">Datenpunkte</span>
+                                <span class="font-mono text-slate-500" x-text="detailStats.n + ' Tage'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Preisänderungs-Tabelle -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-semibold mb-3">Alle Preisänderungen</h3>
+                    <template x-if="selectedArtikel">
+                        <div class="space-y-1 overflow-y-auto max-h-44">
+                            <template x-for="(p, i) in selectedArtikel.einkaufspreise" :key="'ek'+i">
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="font-mono text-slate-600 w-24 shrink-0" x-text="p.gueltig_ab"></span>
+                                    <span class="px-1.5 py-0.5 bg-amber-950 text-amber-400 rounded shrink-0">EK</span>
+                                    <span class="font-mono font-semibold text-amber-400" x-text="p.preis.toFixed(2) + ' €'"></span>
+                                    <template x-if="i > 0">
+                                        <span class="text-slate-500"
+                                            x-text="'Δ ' + (p.preis - selectedArtikel.einkaufspreise[i-1].preis >= 0 ? '+' : '') + (p.preis - selectedArtikel.einkaufspreise[i-1].preis).toFixed(2) + ' €'"></span>
+                                    </template>
+                                    <template x-if="i === 0">
+                                        <span class="text-slate-600">Startwert</span>
+                                    </template>
+                                </div>
+                            </template>
+                            <template x-for="(p, i) in selectedArtikel.verkaufspreise" :key="'vk'+i">
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="font-mono text-slate-600 w-24 shrink-0" x-text="p.gueltig_ab"></span>
+                                    <span class="px-1.5 py-0.5 bg-blue-950 text-blue-400 rounded shrink-0">VK</span>
+                                    <span class="font-mono font-semibold text-blue-400" x-text="p.preis.toFixed(2) + ' €'"></span>
+                                    <template x-if="i > 0">
+                                        <span class="text-slate-500"
+                                            x-text="'Δ ' + (p.preis - selectedArtikel.verkaufspreise[i-1].preis >= 0 ? '+' : '') + (p.preis - selectedArtikel.verkaufspreise[i-1].preis).toFixed(2) + ' €'"></span>
+                                    </template>
+                                    <template x-if="i === 0">
+                                        <span class="text-slate-600">Startwert</span>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Ereignis-Analyse -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold mb-1">Ereignis-Analyse</h3>
+                <p class="text-xs text-slate-500 mb-3">Ø Mark-up 30 Tage vor vs. 30 Tage nach jeder Preisänderung</p>
+                <div id="chart-event-impact" class="echart h-44"></div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             COMPARISON VIEW
+        ═══════════════════════════════════════ -->
+        <div x-show="currentView === 'comparison'" class="p-5 space-y-4">
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold">Vergleichsansicht</h2>
+                    <p class="text-xs text-slate-500">Bis zu 5 Artikel gleichzeitig vergleichen</p>
+                </div>
+                <div class="flex gap-1.5">
+                    <template x-for="m in [{id:'absolute',label:'Absolut (Mark-up %)'},{id:'normalized',label:'Normalisiert (Idx=100)'},{id:'diff',label:'Δ Portfolio-Ø'}]" :key="m.id">
+                        <button @click="compareMode = m.id; initComparisonChart()"
+                            :class="compareMode === m.id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'"
+                            class="px-3 py-1.5 text-xs rounded transition-colors"
+                            x-text="m.label"></button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Artikel-Auswahl -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold mb-3">
+                    Artikel auswählen
+                    <span class="text-slate-500 font-normal ml-1" x-text="'(' + compareArtikel.length + '/5 gewählt)'"></span>
+                </h3>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="a in ARTIKEL" :key="a.id">
+                        <button @click="toggleCompare(a)"
+                            :disabled="!isInCompare(a) && compareArtikel.length >= 5"
+                            :class="isInCompare(a)
+                                ? 'border-blue-500 bg-blue-900/30 text-blue-300'
+                                : 'border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200'"
+                            class="px-2.5 py-1 text-xs border rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full inline-block"
+                                :style="'background:' + getCatColor(a.kategorie)"></span>
+                            <span class="font-mono text-slate-500 text-xs" x-text="a.id"></span>
+                            <span x-text="a.name"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Vergleichs-Chart -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <div id="chart-comparison" class="echart h-96"
+                    x-text="compareArtikel.length === 0 ? 'Mindestens einen Artikel auswählen ...' : ''"></div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PORTFOLIO VIEW
+        ═══════════════════════════════════════ -->
+        <div x-show="currentView === 'portfolio'" class="p-5 space-y-4">
+
+            <div>
+                <h2 class="text-base font-bold">Portfolio-Analyse</h2>
+                <p class="text-xs text-slate-500">Aggregierte Margenanalyse — alle gefilterten Artikel</p>
+            </div>
+
+            <!-- Histogramm + Kategorien -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-semibold mb-1">Margenverteilung (aktuell)</h3>
+                    <p class="text-xs text-slate-500 mb-3">Histogramm Mark-up % aller Artikel</p>
+                    <div id="chart-histogram" class="echart h-52"></div>
+                </div>
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-semibold mb-1">Kategorien-Vergleich</h3>
+                    <p class="text-xs text-slate-500 mb-3">Ø Mark-up und Ø Handelsspanne je Kategorie</p>
+                    <div id="chart-catbars" class="echart h-52"></div>
+                </div>
+            </div>
+
+            <!-- Heatmap -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold mb-1">Monats-Heatmap: Ø Mark-up</h3>
+                <p class="text-xs text-slate-500 mb-3">Artikel × Monat — saisonale Muster und Margenschwankungen erkennbar</p>
+                <div id="chart-heatmap" class="echart h-80"></div>
+            </div>
+
+            <!-- Volatilität -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold mb-1">Volatilitäts-Ranking</h3>
+                <p class="text-xs text-slate-500 mb-3">Standardabweichung des Mark-up — grün = stabil, rot = volatil</p>
+                <div id="chart-volatility" class="echart h-72"></div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCRIPT
+════════════════════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════════════════════════
+// DATA: 20 Schweißgeräte
+// ════════════════════════════════════════════════════════════
+const ARTIKEL = [
+    // ── MIG/MAG ──────────────────────────────────────────
+    {
+        id: 'SW-001', name: 'ProWeld 150 MIG', kategorie: 'MIG/MAG', leistung_w: 4500,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 210.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 349.00 },
+            { gueltig_ab: '2023-09-01', preis: 369.00 },
+            { gueltig_ab: '2024-03-01', preis: 379.00 },
+            { gueltig_ab: '2025-01-01', preis: 399.00 }
+        ]
+    },
+    {
+        id: 'SW-002', name: 'ProWeld 200 MIG', kategorie: 'MIG/MAG', leistung_w: 5500,
+        szenario: 'Margenkompression: EK stieg stark, VK folgte zu spät',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 285.00 },
+            { gueltig_ab: '2024-07-01', preis: 340.00 }  // +19 % EK-Anstieg
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 469.00 },
+            { gueltig_ab: '2024-01-01', preis: 489.00 },  // zu kleine Anpassung
+            { gueltig_ab: '2024-10-01', preis: 559.00 }   // Korrektur
+        ]
+    },
+    {
+        id: 'SW-003', name: 'WeldMaster 170 MIG', kategorie: 'MIG/MAG', leistung_w: 3500,
+        szenario: 'Saisonales Muster: VK-Rabatt im Sommer',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 195.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 329.00 },
+            { gueltig_ab: '2023-05-01', preis: 319.00 },
+            { gueltig_ab: '2023-11-01', preis: 339.00 },
+            { gueltig_ab: '2024-05-01', preis: 329.00 },
+            { gueltig_ab: '2024-11-01', preis: 349.00 },
+            { gueltig_ab: '2025-05-01', preis: 339.00 }
+        ]
+    },
+    {
+        id: 'SW-004', name: 'EcoWeld 130 MIG', kategorie: 'MIG/MAG', leistung_w: 2500,
+        szenario: 'Volatile Niedrigmarge: häufige VK-Änderungen',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 155.00 },
+            { gueltig_ab: '2024-09-01', preis: 168.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 235.00 },
+            { gueltig_ab: '2023-04-01', preis: 225.00 },
+            { gueltig_ab: '2023-08-01', preis: 239.00 },
+            { gueltig_ab: '2024-01-01', preis: 229.00 },
+            { gueltig_ab: '2024-06-01', preis: 249.00 },
+            { gueltig_ab: '2024-09-01', preis: 255.00 },
+            { gueltig_ab: '2025-01-01', preis: 249.00 },
+            { gueltig_ab: '2025-06-01', preis: 265.00 }
+        ]
+    },
+    {
+        id: 'SW-005', name: 'HeavyDuty 250 MAG', kategorie: 'MIG/MAG', leistung_w: 7000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 380.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 649.00 },
+            { gueltig_ab: '2023-07-01', preis: 679.00 },
+            { gueltig_ab: '2024-01-01', preis: 699.00 },
+            { gueltig_ab: '2025-01-01', preis: 729.00 }
+        ]
+    },
+    {
+        id: 'SW-006', name: 'PowerWeld 300 MAG', kategorie: 'MIG/MAG', leistung_w: 8000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 450.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 799.00 },
+            { gueltig_ab: '2024-01-01', preis: 849.00 },
+            { gueltig_ab: '2025-01-01', preis: 879.00 }
+        ]
+    },
+
+    // ── WIG/TIG ──────────────────────────────────────────
+    {
+        id: 'SW-007', name: 'TIG Master 160', kategorie: 'WIG/TIG', leistung_w: 3000,
+        szenario: 'Überreaktion VK: Marge stark verbessert',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 230.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 369.00 },
+            { gueltig_ab: '2023-06-01', preis: 399.00 },
+            { gueltig_ab: '2023-12-01', preis: 429.00 },
+            { gueltig_ab: '2024-06-01', preis: 459.00 },
+            { gueltig_ab: '2025-01-01', preis: 489.00 }
+        ]
+    },
+    {
+        id: 'SW-008', name: 'TIG Pro 200', kategorie: 'WIG/TIG', leistung_w: 4000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 295.00 },
+            { gueltig_ab: '2025-01-01', preis: 315.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 499.00 },
+            { gueltig_ab: '2024-01-01', preis: 519.00 },
+            { gueltig_ab: '2025-01-01', preis: 549.00 }
+        ]
+    },
+    {
+        id: 'SW-009', name: 'TIG Expert 180', kategorie: 'WIG/TIG', leistung_w: 3500,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 265.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 449.00 },
+            { gueltig_ab: '2024-07-01', preis: 469.00 },
+            { gueltig_ab: '2025-04-01', preis: 489.00 }
+        ]
+    },
+    {
+        id: 'SW-010', name: 'EcoTIG 140', kategorie: 'WIG/TIG', leistung_w: 2000,
+        szenario: 'Niedrigmarge: EK-Anstieg nicht vollständig weitergegeben',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 195.00 },
+            { gueltig_ab: '2024-01-01', preis: 218.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 289.00 },
+            { gueltig_ab: '2024-01-01', preis: 299.00 },
+            { gueltig_ab: '2025-01-01', preis: 315.00 }
+        ]
+    },
+    {
+        id: 'SW-011', name: 'TIG Ultra 250', kategorie: 'WIG/TIG', leistung_w: 6000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 340.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 599.00 },
+            { gueltig_ab: '2023-10-01', preis: 629.00 },
+            { gueltig_ab: '2024-07-01', preis: 659.00 },
+            { gueltig_ab: '2025-01-01', preis: 699.00 }
+        ]
+    },
+
+    // ── Elektrode ─────────────────────────────────────────
+    {
+        id: 'SW-012', name: 'StickWeld 160', kategorie: 'Elektrode', leistung_w: 3000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 125.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 199.00 },
+            { gueltig_ab: '2024-01-01', preis: 209.00 },
+            { gueltig_ab: '2025-01-01', preis: 219.00 }
+        ]
+    },
+    {
+        id: 'SW-013', name: 'StickPro 200', kategorie: 'Elektrode', leistung_w: 5000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 175.00 },
+            { gueltig_ab: '2024-06-01', preis: 189.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 289.00 },
+            { gueltig_ab: '2023-06-01', preis: 299.00 },
+            { gueltig_ab: '2024-01-01', preis: 309.00 },
+            { gueltig_ab: '2024-06-01', preis: 319.00 },
+            { gueltig_ab: '2025-01-01', preis: 329.00 }
+        ]
+    },
+    {
+        id: 'SW-014', name: 'StickMaster 250', kategorie: 'Elektrode', leistung_w: 7000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 220.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 389.00 },
+            { gueltig_ab: '2023-07-01', preis: 409.00 },
+            { gueltig_ab: '2024-01-01', preis: 429.00 },
+            { gueltig_ab: '2025-01-01', preis: 449.00 }
+        ]
+    },
+    {
+        id: 'SW-015', name: 'EcoStick 130', kategorie: 'Elektrode', leistung_w: 3000,
+        szenario: 'Volatile Niedrigmarge: enge Spreads, häufige Rabattaktionen',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 95.00 },
+            { gueltig_ab: '2024-01-01', preis: 108.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 149.00 },
+            { gueltig_ab: '2023-05-01', preis: 139.00 },
+            { gueltig_ab: '2023-09-01', preis: 155.00 },
+            { gueltig_ab: '2024-01-01', preis: 145.00 },
+            { gueltig_ab: '2024-04-01', preis: 159.00 },
+            { gueltig_ab: '2024-08-01', preis: 149.00 },
+            { gueltig_ab: '2025-01-01', preis: 165.00 },
+            { gueltig_ab: '2025-06-01', preis: 155.00 }
+        ]
+    },
+
+    // ── Plasma ────────────────────────────────────────────
+    {
+        id: 'SW-016', name: 'PlasmaCut 40', kategorie: 'Plasma', leistung_w: 2000,
+        szenario: 'Saisonales Muster: Sommer-Rabatt Mai–Sep',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 185.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 299.00 },
+            { gueltig_ab: '2023-05-01', preis: 279.00 },
+            { gueltig_ab: '2023-10-01', preis: 299.00 },
+            { gueltig_ab: '2024-01-01', preis: 309.00 },
+            { gueltig_ab: '2024-05-01', preis: 289.00 },
+            { gueltig_ab: '2024-10-01', preis: 309.00 },
+            { gueltig_ab: '2025-01-01', preis: 319.00 },
+            { gueltig_ab: '2025-05-01', preis: 299.00 }
+        ]
+    },
+    {
+        id: 'SW-017', name: 'PlasmaCut 60', kategorie: 'Plasma', leistung_w: 3500,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 245.00 },
+            { gueltig_ab: '2024-07-01', preis: 268.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 409.00 },
+            { gueltig_ab: '2024-01-01', preis: 429.00 },
+            { gueltig_ab: '2024-07-01', preis: 449.00 },
+            { gueltig_ab: '2025-01-01', preis: 469.00 }
+        ]
+    },
+    {
+        id: 'SW-018', name: 'PlasmaPro 80', kategorie: 'Plasma', leistung_w: 5000,
+        szenario: null,
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 320.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 549.00 },
+            { gueltig_ab: '2023-10-01', preis: 579.00 },
+            { gueltig_ab: '2024-07-01', preis: 599.00 },
+            { gueltig_ab: '2025-01-01', preis: 629.00 }
+        ]
+    },
+
+    // ── Multi ─────────────────────────────────────────────
+    {
+        id: 'SW-019', name: 'MultiWeld 3in1', kategorie: 'Multi', leistung_w: 6000,
+        szenario: 'Stabiles Premium: konstant hohe Marge',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 425.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 749.00 },
+            { gueltig_ab: '2024-01-01', preis: 779.00 },
+            { gueltig_ab: '2025-01-01', preis: 809.00 }
+        ]
+    },
+    {
+        id: 'SW-020', name: 'MultiPro 5in1', kategorie: 'Multi', leistung_w: 10000,
+        szenario: 'Stabiles Premium: höchste Marge im Portfolio',
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 680.00 }
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 1299.00 },
+            { gueltig_ab: '2024-01-01', preis: 1349.00 },
+            { gueltig_ab: '2025-01-01', preis: 1399.00 }
+        ]
+    },
+
+    // ── SET-Artikel (SW-021 – SW-035) ─────────────────────
+    // Preise = Summe Hauptartikel + Zubehör (20–40 % des Haupt-EK je Komponente)
+    // Statistik bezieht sich stets auf den Gesamtartikel
+
+    {
+        id: 'SW-021', name: 'ProWeld 150 MIG Vollausstattung', kategorie: 'MIG/MAG',
+        typ: 'set', hauptartikel_id: 'SW-001', leistung_w: 4500,
+        szenario: null,
+        komponenten: [
+            { name: 'ProWeld 150 MIG', id: 'SW-001', anteil: 100 },
+            { name: 'Schutzhelm Auto-Dunkel',          anteil: 30 },
+            { name: 'Schweißdraht-Set 5 kg',            anteil: 25 },
+            { name: 'Schweißschutzhandschuhe Leder',    anteil: 20 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 368.00 }        // 210 × 1,75
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 614.00 },       // 349 × 1,76
+            { gueltig_ab: '2023-09-01', preis: 650.00 },       // 369 × 1,76
+            { gueltig_ab: '2024-03-01', preis: 667.00 },       // 379 × 1,76
+            { gueltig_ab: '2025-01-01', preis: 703.00 }        // 399 × 1,76
+        ]
+    },
+    {
+        id: 'SW-022', name: 'ProWeld 200 MIG Vollausstattung', kategorie: 'MIG/MAG',
+        typ: 'set', hauptartikel_id: 'SW-002', leistung_w: 5500,
+        szenario: 'Margenkompression (Set): EK-Anstieg wirkt verstärkt auf Gesamtset',
+        komponenten: [
+            { name: 'ProWeld 200 MIG', id: 'SW-002', anteil: 100 },
+            { name: 'Gasdruckminderer Profi',           anteil: 28 },
+            { name: 'Schweißdraht 15 kg Spule',         anteil: 22 },
+            { name: 'Schutzhelm Profi Auto',            anteil: 20 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 485.00 },       // 285 × 1,70
+            { gueltig_ab: '2024-07-01', preis: 578.00 }        // 340 × 1,70
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 802.00 },       // 469 × 1,71
+            { gueltig_ab: '2024-01-01', preis: 836.00 },       // 489 × 1,71
+            { gueltig_ab: '2024-10-01', preis: 956.00 }        // 559 × 1,71
+        ]
+    },
+    {
+        id: 'SW-023', name: 'WeldMaster 170 MIG Vollausstattung', kategorie: 'MIG/MAG',
+        typ: 'set', hauptartikel_id: 'SW-003', leistung_w: 3500,
+        szenario: 'Saisonales Muster (Set): Sommermarge in allen Komponenten sichtbar',
+        komponenten: [
+            { name: 'WeldMaster 170 MIG', id: 'SW-003', anteil: 100 },
+            { name: 'Schweißmaske Auto-Dunkel',         anteil: 38 },
+            { name: 'Drahtvorschub-Ersatzrollenset',    anteil: 24 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 316.00 }        // 195 × 1,62
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 533.00 },       // 329 × 1,62
+            { gueltig_ab: '2023-05-01', preis: 517.00 },       // 319 × 1,62 (Sommer)
+            { gueltig_ab: '2023-11-01', preis: 549.00 },       // 339 × 1,62
+            { gueltig_ab: '2024-05-01', preis: 533.00 },       // 329 × 1,62 (Sommer)
+            { gueltig_ab: '2024-11-01', preis: 565.00 },       // 349 × 1,62
+            { gueltig_ab: '2025-05-01', preis: 549.00 }        // 339 × 1,62 (Sommer)
+        ]
+    },
+    {
+        id: 'SW-024', name: 'EcoWeld 130 MIG Vollausstattung', kategorie: 'MIG/MAG',
+        typ: 'set', hauptartikel_id: 'SW-004', leistung_w: 2500,
+        szenario: 'Volatile Niedrigmarge (Set): enge Spreads, häufige Schwankungen',
+        komponenten: [
+            { name: 'EcoWeld 130 MIG', id: 'SW-004', anteil: 100 },
+            { name: 'Einstiegshelm Basic',              anteil: 30 },
+            { name: 'Starterkit Schweißdraht 1 kg',     anteil: 25 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 240.00 },       // 155 × 1,55
+            { gueltig_ab: '2024-09-01', preis: 260.00 }        // 168 × 1,55
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 367.00 },       // 235 × 1,56
+            { gueltig_ab: '2023-04-01', preis: 351.00 },
+            { gueltig_ab: '2023-08-01', preis: 373.00 },
+            { gueltig_ab: '2024-01-01', preis: 357.00 },
+            { gueltig_ab: '2024-06-01', preis: 388.00 },
+            { gueltig_ab: '2024-09-01', preis: 398.00 },
+            { gueltig_ab: '2025-01-01', preis: 388.00 },
+            { gueltig_ab: '2025-06-01', preis: 413.00 }
+        ]
+    },
+    {
+        id: 'SW-025', name: 'TIG Master 160 Vollausstattung', kategorie: 'WIG/TIG',
+        typ: 'set', hauptartikel_id: 'SW-007', leistung_w: 3000,
+        szenario: 'Überreaktion VK (Set): starke Margenverbesserung über Zeit',
+        komponenten: [
+            { name: 'TIG Master 160', id: 'SW-007', anteil: 100 },
+            { name: 'WIG-Gasdüsensatz 8-tlg.',          anteil: 38 },
+            { name: 'Wolframelektroden-Sortiment',       anteil: 24 },
+            { name: 'Schutzgas-Adapter-Set',             anteil: 20 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 419.00 }        // 230 × 1,82
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 661.00 },       // 369 × 1,79
+            { gueltig_ab: '2023-06-01', preis: 714.00 },       // 399 × 1,79
+            { gueltig_ab: '2023-12-01', preis: 768.00 },       // 429 × 1,79
+            { gueltig_ab: '2024-06-01', preis: 822.00 },       // 459 × 1,79
+            { gueltig_ab: '2025-01-01', preis: 875.00 }        // 489 × 1,79
+        ]
+    },
+    {
+        id: 'SW-026', name: 'TIG Pro 200 Vollausstattung', kategorie: 'WIG/TIG',
+        typ: 'set', hauptartikel_id: 'SW-008', leistung_w: 4000,
+        szenario: null,
+        komponenten: [
+            { name: 'TIG Pro 200', id: 'SW-008', anteil: 100 },
+            { name: 'Fußpedal-Fernregler',               anteil: 35 },
+            { name: 'WIG-Brenner Profi-Set',             anteil: 33 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 496.00 },       // 295 × 1,68
+            { gueltig_ab: '2025-01-01', preis: 529.00 }        // 315 × 1,68
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 843.00 },       // 499 × 1,69
+            { gueltig_ab: '2024-01-01', preis: 877.00 },       // 519 × 1,69
+            { gueltig_ab: '2025-01-01', preis: 928.00 }        // 549 × 1,69
+        ]
+    },
+    {
+        id: 'SW-027', name: 'TIG Ultra 250 Vollausstattung', kategorie: 'WIG/TIG',
+        typ: 'set', hauptartikel_id: 'SW-011', leistung_w: 6000,
+        szenario: null,
+        komponenten: [
+            { name: 'TIG Ultra 250', id: 'SW-011', anteil: 100 },
+            { name: 'Highend-Schweißhelm True Color',    anteil: 40 },
+            { name: 'WIG-Wasserkühler Set',              anteil: 32 },
+            { name: 'WIG-Brenner Profi LC 4m',           anteil: 20 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 653.00 }        // 340 × 1,92
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 1138.00 },      // 599 × 1,90
+            { gueltig_ab: '2023-10-01', preis: 1195.00 },      // 629 × 1,90
+            { gueltig_ab: '2024-07-01', preis: 1252.00 },      // 659 × 1,90
+            { gueltig_ab: '2025-01-01', preis: 1328.00 }       // 699 × 1,90
+        ]
+    },
+    {
+        id: 'SW-028', name: 'StickPro 200 Vollausstattung', kategorie: 'Elektrode',
+        typ: 'set', hauptartikel_id: 'SW-013', leistung_w: 5000,
+        szenario: null,
+        komponenten: [
+            { name: 'StickPro 200', id: 'SW-013', anteil: 100 },
+            { name: 'Elektrodensortiment 5 kg',          anteil: 35 },
+            { name: 'Schweißschutzmaske Profi',          anteil: 22 },
+            { name: 'Schweißhandschuhe Pro',             anteil: 15 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 301.00 },       // 175 × 1,72
+            { gueltig_ab: '2024-06-01', preis: 325.00 }        // 189 × 1,72
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 503.00 },       // 289 × 1,74
+            { gueltig_ab: '2023-06-01', preis: 520.00 },       // 299 × 1,74
+            { gueltig_ab: '2024-01-01', preis: 538.00 },       // 309 × 1,74
+            { gueltig_ab: '2024-06-01', preis: 555.00 },       // 319 × 1,74
+            { gueltig_ab: '2025-01-01', preis: 572.00 }        // 329 × 1,74
+        ]
+    },
+    {
+        id: 'SW-029', name: 'StickMaster 250 Vollausstattung', kategorie: 'Elektrode',
+        typ: 'set', hauptartikel_id: 'SW-014', leistung_w: 7000,
+        szenario: null,
+        komponenten: [
+            { name: 'StickMaster 250', id: 'SW-014', anteil: 100 },
+            { name: 'Profi-Elektroden-Set 10 kg',        anteil: 40 },
+            { name: 'Schutzmaske Profi 9-13',            anteil: 25 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 363.00 }        // 220 × 1,65
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 646.00 },       // 389 × 1,66
+            { gueltig_ab: '2023-07-01', preis: 679.00 },       // 409 × 1,66
+            { gueltig_ab: '2024-01-01', preis: 712.00 },       // 429 × 1,66
+            { gueltig_ab: '2025-01-01', preis: 745.00 }        // 449 × 1,66
+        ]
+    },
+    {
+        id: 'SW-030', name: 'PlasmaCut 40 Vollausstattung', kategorie: 'Plasma',
+        typ: 'set', hauptartikel_id: 'SW-016', leistung_w: 2000,
+        szenario: 'Saisonales Muster (Set): Sommer-Rabatt Mai–Sep im Set sichtbar',
+        komponenten: [
+            { name: 'PlasmaCut 40', id: 'SW-016', anteil: 100 },
+            { name: 'Düsensatz Plasma Standard 6-tlg.', anteil: 35 },
+            { name: 'Schneidtisch Klapp 60×40 cm',       anteil: 25 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 296.00 }        // 185 × 1,60
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 481.00 },       // 299 × 1,61
+            { gueltig_ab: '2023-05-01', preis: 449.00 },       // 279 × 1,61 (Sommer)
+            { gueltig_ab: '2023-10-01', preis: 481.00 },       // 299 × 1,61
+            { gueltig_ab: '2024-01-01', preis: 497.00 },       // 309 × 1,61
+            { gueltig_ab: '2024-05-01', preis: 465.00 },       // 289 × 1,61 (Sommer)
+            { gueltig_ab: '2024-10-01', preis: 497.00 },       // 309 × 1,61
+            { gueltig_ab: '2025-01-01', preis: 514.00 },       // 319 × 1,61
+            { gueltig_ab: '2025-05-01', preis: 481.00 }        // 299 × 1,61 (Sommer)
+        ]
+    },
+    {
+        id: 'SW-031', name: 'PlasmaCut 60 Vollausstattung', kategorie: 'Plasma',
+        typ: 'set', hauptartikel_id: 'SW-017', leistung_w: 3500,
+        szenario: null,
+        komponenten: [
+            { name: 'PlasmaCut 60', id: 'SW-017', anteil: 100 },
+            { name: 'Plasmadüsensatz Profi 10-tlg.',     anteil: 32 },
+            { name: 'Schutzbrille & Schutzgamaschen',    anteil: 23 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 380.00 },       // 245 × 1,55
+            { gueltig_ab: '2024-07-01', preis: 415.00 }        // 268 × 1,55
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 638.00 },       // 409 × 1,56
+            { gueltig_ab: '2024-01-01', preis: 669.00 },       // 429 × 1,56
+            { gueltig_ab: '2024-07-01', preis: 700.00 },       // 449 × 1,56
+            { gueltig_ab: '2025-01-01', preis: 732.00 }        // 469 × 1,56
+        ]
+    },
+    {
+        id: 'SW-032', name: 'PlasmaPro 80 Vollausstattung', kategorie: 'Plasma',
+        typ: 'set', hauptartikel_id: 'SW-018', leistung_w: 5000,
+        szenario: null,
+        komponenten: [
+            { name: 'PlasmaPro 80', id: 'SW-018', anteil: 100 },
+            { name: 'Profi-Plasmadüsensatz 40-tlg.',     anteil: 40 },
+            { name: 'Kompressorfilter & Druckluftset',   anteil: 35 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 560.00 }        // 320 × 1,75
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 955.00 },       // 549 × 1,74
+            { gueltig_ab: '2023-10-01', preis: 1007.00 },      // 579 × 1,74
+            { gueltig_ab: '2024-07-01', preis: 1042.00 },      // 599 × 1,74
+            { gueltig_ab: '2025-01-01', preis: 1094.00 }       // 629 × 1,74
+        ]
+    },
+    {
+        id: 'SW-033', name: 'MultiWeld 3in1 Vollausstattung', kategorie: 'Multi',
+        typ: 'set', hauptartikel_id: 'SW-019', leistung_w: 6000,
+        szenario: 'Stabiles Premium-Set: konstant hohe Marge über alle Komponenten',
+        komponenten: [
+            { name: 'MultiWeld 3in1', id: 'SW-019', anteil: 100 },
+            { name: 'WIG-Brenner Professional Set',      anteil: 35 },
+            { name: 'MIG/MAG-Zubehörpaket Profi',        anteil: 28 },
+            { name: 'Elektrodensortiment Profi 5 kg',    anteil: 17 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 765.00 }        // 425 × 1,80
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 1341.00 },      // 749 × 1,79
+            { gueltig_ab: '2024-01-01', preis: 1394.00 },      // 779 × 1,79
+            { gueltig_ab: '2025-01-01', preis: 1448.00 }       // 809 × 1,79
+        ]
+    },
+    {
+        id: 'SW-034', name: 'MultiPro 5in1 Vollausstattung', kategorie: 'Multi',
+        typ: 'set', hauptartikel_id: 'SW-020', leistung_w: 10000,
+        szenario: 'Stabiles Premium-Set: höchste absolute Marge im gesamten Portfolio',
+        komponenten: [
+            { name: 'MultiPro 5in1', id: 'SW-020', anteil: 100 },
+            { name: 'Profi-WIG-Komplettsatz',            anteil: 35 },
+            { name: 'Profi-MIG/MAG-Paketzubehör',        anteil: 28 },
+            { name: 'Plasma-Schneidpaket Profi',         anteil: 22 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 1258.00 }       // 680 × 1,85
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 2377.00 },      // 1299 × 1,83
+            { gueltig_ab: '2024-01-01', preis: 2469.00 },      // 1349 × 1,83
+            { gueltig_ab: '2025-01-01', preis: 2560.00 }       // 1399 × 1,83
+        ]
+    },
+    {
+        id: 'SW-035', name: 'EcoTIG 140 Vollausstattung', kategorie: 'WIG/TIG',
+        typ: 'set', hauptartikel_id: 'SW-010', leistung_w: 2000,
+        szenario: 'Niedrigmarge (Set): EK-Kompression drückt Set-Marge unter Einzelartikel',
+        komponenten: [
+            { name: 'EcoTIG 140', id: 'SW-010', anteil: 100 },
+            { name: 'Einstiegs-WIG-Brenner Set',         anteil: 35 },
+            { name: 'Schutz- und Zubehörset Basic',      anteil: 25 }
+        ],
+        einkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 312.00 },       // 195 × 1,60
+            { gueltig_ab: '2024-01-01', preis: 349.00 }        // 218 × 1,60
+        ],
+        verkaufspreise: [
+            { gueltig_ab: '2023-01-01', preis: 454.00 },       // 289 × 1,57
+            { gueltig_ab: '2024-01-01', preis: 469.00 },       // 299 × 1,57
+            { gueltig_ab: '2025-01-01', preis: 495.00 }        // 315 × 1,57
+        ]
+    }
+];
+
+
+// ════════════════════════════════════════════════════════════
+// DATA ENGINE
+// ════════════════════════════════════════════════════════════
+
+function getPriceOnDate(pts, dateStr) {
+    let price = pts[0].preis;
+    for (const p of pts) {
+        if (p.gueltig_ab <= dateStr) price = p.preis;
+        else break;
+    }
+    return price;
+}
+
+function generateDailyData(artikel, startDate, endDate) {
+    const result = [];
+    const ekPts = [...artikel.einkaufspreise].sort((a, b) => a.gueltig_ab.localeCompare(b.gueltig_ab));
+    const vkPts = [...artikel.verkaufspreise].sort((a, b) => a.gueltig_ab.localeCompare(b.gueltig_ab));
+    const ekChanges = new Set(ekPts.map(p => p.gueltig_ab));
+    const vkChanges = new Set(vkPts.map(p => p.gueltig_ab));
+
+    let cur = new Date(startDate);
+    const end = new Date(endDate);
+    while (cur <= end) {
+        const d = cur.toISOString().split('T')[0];
+        const ek = getPriceOnDate(ekPts, d);
+        const vk = getPriceOnDate(vkPts, d);
+        const abs = Math.round((vk - ek) * 100) / 100;
+        const pct = Math.round((abs / ek) * 10000) / 100;
+        const hs  = Math.round((abs / vk) * 10000) / 100;
+        result.push({ datum: d, ek, vk, marge_abs: abs, marge_pct: pct, handelsspanne: hs,
+                      ek_change: ekChanges.has(d), vk_change: vkChanges.has(d) });
+        cur.setDate(cur.getDate() + 1);
+    }
+    return result;
+}
+
+
+// ════════════════════════════════════════════════════════════
+// ANALYSIS HELPERS
+// ════════════════════════════════════════════════════════════
+
+function calcStats(daily) {
+    if (!daily.length) return null;
+    const n = daily.length;
+    const v = daily.map(d => d.marge_pct);
+    const avg = v.reduce((s, x) => s + x, 0) / n;
+    const min = Math.min(...v);
+    const max = Math.max(...v);
+    const std = Math.sqrt(v.reduce((s, x) => s + (x - avg) ** 2, 0) / n);
+    const xm = (n - 1) / 2;
+    const num = v.reduce((s, x, i) => s + (i - xm) * (x - avg), 0);
+    const den = v.reduce((s, _, i) => s + (i - xm) ** 2, 0);
+    const slope = den ? num / den : 0;
+    const hs = daily.map(d => d.handelsspanne);
+    const avgHS = hs.reduce((s, x) => s + x, 0) / n;
+    const absV = daily.map(d => d.marge_abs);
+    const avgAbs = absV.reduce((s, x) => s + x, 0) / n;
+    const last = daily[n - 1];
+    return { n, avgMarkup: avg, minMarkup: min, maxMarkup: max, stddev: std,
+             avgHS, avgAbs, trend: slope,
+             currentEK: last.ek, currentVK: last.vk,
+             currentMarkup: last.marge_pct, currentHS: last.handelsspanne };
+}
+
+function calcMA(daily, win) {
+    const out = [];
+    for (let i = win - 1; i < daily.length; i++) {
+        const slice = daily.slice(i - win + 1, i + 1);
+        const avg = slice.reduce((s, d) => s + d.marge_pct, 0) / win;
+        out.push([daily[i].datum, Math.round(avg * 100) / 100]);
+    }
+    return out;
+}
+
+function portfolioDaily(allDaily, start, end) {
+    const map = {};
+    allDaily.forEach(series => {
+        series.forEach(d => {
+            if (d.datum < start || d.datum > end) return;
+            if (!map[d.datum]) map[d.datum] = { s: 0, c: 0 };
+            map[d.datum].s += d.marge_pct;
+            map[d.datum].c++;
+        });
+    });
+    return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([datum, v]) => ({ datum, avg: Math.round(v.s / v.c * 100) / 100 }));
+}
+
+function sampleEvery(arr, n) {
+    return arr.filter((_, i) => i % n === 0);
+}
+
+function sampleMonthly(arr) {
+    const seen = new Set();
+    return arr.filter(d => {
+        const k = d.datum ? d.datum.slice(0, 7) : (d[0] ? d[0].slice(0, 7) : '');
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+    });
+}
+
+function makeSparkline(daily) {
+    const src = daily.slice(-365);
+    const step = Math.max(1, Math.floor(src.length / 52));
+    const pts = src.filter((_, i) => i % step === 0).map(d => d.marge_pct);
+    if (pts.length < 2) return '';
+    const mn = Math.min(...pts), mx = Math.max(...pts), rng = mx - mn || 1;
+    const W = 80, H = 22;
+    return pts.map((v, i) => {
+        const x = (i / (pts.length - 1)) * W;
+        const y = H - ((v - mn) / rng) * (H - 2) - 1;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+}
+
+
+// ════════════════════════════════════════════════════════════
+// ALPINE APP
+// ════════════════════════════════════════════════════════════
+
+function dashboard() {
+    return {
+        // ── State ───────────────────────────────────────
+        ARTIKEL,
+        currentView: 'dashboard',
+        selectedArtikel: null,
+        selectedArtikelId: 'SW-001',
+        compareArtikel: [],
+        compareMode: 'absolute',
+
+        // Filters
+        dateStart: '2023-01-01',
+        dateEnd: '2025-12-31',
+        allCategories: ['MIG/MAG', 'WIG/TIG', 'Elektrode', 'Plasma', 'Multi'],
+        selectedCategories: ['MIG/MAG', 'WIG/TIG', 'Elektrode', 'Plasma', 'Multi'],
+        marginThreshold: 0,
+        movingAvg: 30,
+        showMA: true,
+        sortBy: 'marge_pct',
+        typeFilter: 'alle',
+        activeQuickFilter: 36,
+
+        // Derived
+        rankingData: [],
+        filteredArtikel: [],
+        portfolioData: [],
+        detailStats: null,
+        _cache: {},
+        _charts: {},
+
+        // ── Init ────────────────────────────────────────
+        init() {
+            ARTIKEL.forEach(a => {
+                this._cache[a.id] = generateDailyData(a, '2023-01-01', '2025-12-31');
+            });
+            this.updateDerived();
+            this.$nextTick(() => this.initDashboardCharts());
+            window.addEventListener('resize', () => {
+                Object.values(this._charts).forEach(c => c && !c.isDisposed() && c.resize());
+            });
+        },
+
+        // ── Derived data ─────────────────────────────────
+        getFiltered(id) {
+            return (this._cache[id] || []).filter(d => d.datum >= this.dateStart && d.datum <= this.dateEnd);
+        },
+
+        updateDerived() {
+            this.filteredArtikel = ARTIKEL.filter(a => {
+                if (!this.selectedCategories.includes(a.kategorie)) return false;
+                if (this.typeFilter === 'einzel' && a.typ === 'set') return false;
+                if (this.typeFilter === 'set'    && a.typ !== 'set') return false;
+                return true;
+            });
+            this.rankingData = this.filteredArtikel.map(a => {
+                const daily = this.getFiltered(a.id);
+                if (!daily.length) return null;
+                const s = calcStats(daily);
+                return { ...a, latest: daily[daily.length - 1], stats: s, sparkline: makeSparkline(daily) };
+            }).filter(Boolean);
+            this.sortRanking();
+            this.portfolioData = portfolioDaily(
+                this.filteredArtikel.map(a => this._cache[a.id]), this.dateStart, this.dateEnd
+            );
+            if (this.selectedArtikel) this.refreshDetailStats();
+        },
+
+        sortRanking() {
+            this.rankingData.sort((a, b) => {
+                if (this.sortBy === 'marge_abs') return b.latest.marge_abs - a.latest.marge_abs;
+                if (this.sortBy === 'handelsspanne') return b.latest.handelsspanne - a.latest.handelsspanne;
+                return b.latest.marge_pct - a.latest.marge_pct;
+            });
+        },
+
+        refreshDetailStats() {
+            if (!this.selectedArtikel) return;
+            this.detailStats = calcStats(this.getFiltered(this.selectedArtikel.id));
+        },
+
+        // ── KPI Getters ──────────────────────────────────
+        get kpiHighest() { return this.rankingData[0] || null; },
+        get kpiLowest()  { return this.rankingData[this.rankingData.length - 1] || null; },
+        get kpiAvgMarkup() {
+            if (!this.rankingData.length) return 0;
+            return this.rankingData.reduce((s, a) => s + a.latest.marge_pct, 0) / this.rankingData.length;
+        },
+        get kpiAvgHS() {
+            if (!this.rankingData.length) return 0;
+            return this.rankingData.reduce((s, a) => s + a.latest.handelsspanne, 0) / this.rankingData.length;
+        },
+        get kpiAvgAbsMargin() {
+            if (!this.rankingData.length) return 0;
+            return this.rankingData.reduce((s, a) => s + a.latest.marge_abs, 0) / this.rankingData.length;
+        },
+        get kpiChanges() {
+            const d = new Date(this.dateEnd);
+            d.setDate(d.getDate() - 30);
+            const cut = d.toISOString().split('T')[0];
+            let ek = 0, vk = 0;
+            ARTIKEL.forEach(a => {
+                a.einkaufspreise.forEach(p => { if (p.gueltig_ab >= cut && p.gueltig_ab <= this.dateEnd) ek++; });
+                a.verkaufspreise.forEach(p => { if (p.gueltig_ab >= cut && p.gueltig_ab <= this.dateEnd) vk++; });
+            });
+            return { total: ek + vk, ek, vk };
+        },
+
+        // ── Navigation ───────────────────────────────────
+        navigateTo(view) {
+            this.currentView = view;
+            this.$nextTick(() => {
+                if (view === 'dashboard')  this.initDashboardCharts();
+                if (view === 'detail')     this.initDetailCharts();
+                if (view === 'comparison') this.initComparisonChart();
+                if (view === 'portfolio')  this.initPortfolioCharts();
+            });
+        },
+
+        showDetail(a) {
+            this.selectedArtikel = a;
+            this.selectedArtikelId = a.id;
+            this.refreshDetailStats();
+            this.currentView = 'detail';
+            this.$nextTick(() => this.initDetailCharts());
+        },
+
+        changeDetailArtikel() {
+            const raw = ARTIKEL.find(x => x.id === this.selectedArtikelId);
+            if (!raw) return;
+            const daily = this.getFiltered(raw.id);
+            this.selectedArtikel = { ...raw, latest: daily[daily.length - 1], stats: calcStats(daily), sparkline: makeSparkline(daily) };
+            this.refreshDetailStats();
+            this.$nextTick(() => this.initDetailCharts());
+        },
+
+        toggleCompare(a) {
+            const idx = this.compareArtikel.findIndex(x => x.id === a.id);
+            if (idx >= 0) this.compareArtikel.splice(idx, 1);
+            else if (this.compareArtikel.length < 5) this.compareArtikel.push(a);
+            this.$nextTick(() => this.initComparisonChart());
+        },
+
+        isInCompare(a) { return this.compareArtikel.some(x => x.id === a.id); },
+
+        getDetailScenario() {
+            return this.selectedArtikel?.szenario || null;
+        },
+
+        // ── Filters ──────────────────────────────────────
+        applyFilters() {
+            this.updateDerived();
+            this.$nextTick(() => this.navigateTo(this.currentView));
+        },
+
+        setQuickFilter(months) {
+            this.activeQuickFilter = months;
+            const end = new Date('2025-12-31');
+            const start = new Date(end);
+            start.setMonth(start.getMonth() - months);
+            this.dateStart = start.toISOString().split('T')[0];
+            this.dateEnd   = '2025-12-31';
+            this.applyFilters();
+        },
+
+        getCatCount(cat)  { return ARTIKEL.filter(a => a.kategorie === cat).length; },
+
+        getCatColor(cat) {
+            return { 'MIG/MAG': '#3B82F6', 'WIG/TIG': '#A855F7', 'Elektrode': '#F59E0B', 'Plasma': '#06B6D4', 'Multi': '#10B981' }[cat] || '#64748b';
+        },
+
+        getCatBadgeStyle(cat) {
+            const map = {
+                'MIG/MAG':  'background:#1e3a5f;color:#93c5fd',
+                'WIG/TIG':  'background:#2e1065;color:#d8b4fe',
+                'Elektrode':'background:#451a03;color:#fcd34d',
+                'Plasma':   'background:#083344;color:#67e8f9',
+                'Multi':    'background:#022c22;color:#6ee7b7'
+            };
+            return (map[cat] || 'background:#1e293b;color:#94a3b8') + ';padding:2px 8px;border-radius:4px;';
+        },
+
+        // ── ECharts helpers ──────────────────────────────
+        _axX() {
+            return { type: 'time',
+                axisLabel: { color: '#64748b', fontSize: 11 },
+                axisLine:  { lineStyle: { color: '#1e293b' } },
+                splitLine: { show: false },
+                axisTick:  { show: false } };
+        },
+        _axY(unit) {
+            return { nameTextStyle: { color: '#64748b', fontSize: 10 }, nameGap: 6,
+                axisLabel: { color: '#64748b', fontSize: 11, formatter: v => v + unit },
+                axisLine:  { lineStyle: { color: '#1e293b' } },
+                splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
+                axisTick:  { show: false } };
+        },
+        _zoom() {
+            return [
+                { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
+                { type: 'slider', xAxisIndex: 0, bottom: 6, height: 20,
+                  borderColor: '#1e293b', backgroundColor: '#0f172a',
+                  fillerColor: 'rgba(59,130,246,0.12)',
+                  handleStyle: { color: '#3B82F6' },
+                  textStyle: { color: '#475569', fontSize: 10 },
+                  moveHandleSize: 4 }
+            ];
+        },
+        _tip(fmt) {
+            return { trigger: 'axis', backgroundColor: '#1e293b', borderColor: '#334155',
+                     textStyle: { color: '#e2e8f0', fontSize: 11 }, formatter: fmt };
+        },
+        _chart(id, opt) {
+            const el = document.getElementById(id);
+            if (!el) return null;
+            if (this._charts[id] && !this._charts[id].isDisposed()) this._charts[id].dispose();
+            const c = echarts.init(el, null, { renderer: 'canvas' });
+            this._charts[id] = c;
+            c.setOption({ backgroundColor: 'transparent', ...opt });
+            return c;
+        },
+
+        // ── DASHBOARD CHARTS ─────────────────────────────
+        initDashboardCharts() {
+            this._chartPortfolioTrend();
+            this._chartCategory();
+            this.refreshRankingChart();
+        },
+
+        _chartPortfolioTrend() {
+            const raw = sampleMonthly(this.portfolioData);
+            this._chart('chart-portfolio-trend', {
+                grid: { top: 20, right: 20, bottom: 50, left: 52 },
+                tooltip: this._tip(p => `${p[0].axisValueLabel}<br/>Ø Mark-up: <b>${p[0].data[1].toFixed(1)} %</b>`),
+                xAxis: this._axX(),
+                yAxis: { ...this._axY('%'), name: 'Ø Mark-up' },
+                dataZoom: this._zoom(),
+                series: [{
+                    type: 'line', smooth: 0.4, symbol: 'none',
+                    data: raw.map(d => [d.datum, d.avg]),
+                    lineStyle: { color: '#10B981', width: 2.5 },
+                    areaStyle: { color: { type: 'linear', x:0,y:0,x2:0,y2:1,
+                        colorStops: [{ offset: 0, color: 'rgba(16,185,129,.3)' },
+                                     { offset: 1, color: 'rgba(16,185,129,.02)' }] } }
+                }]
+            });
+        },
+
+        _chartCategory() {
+            const colors = { 'MIG/MAG': '#3B82F6', 'WIG/TIG': '#A855F7', 'Elektrode': '#F59E0B', 'Plasma': '#06B6D4', 'Multi': '#10B981' };
+            const data = this.allCategories.map(cat => {
+                const arts = this.rankingData.filter(a => a.kategorie === cat);
+                if (!arts.length) return null;
+                const avg = arts.reduce((s, a) => s + a.latest.marge_pct, 0) / arts.length;
+                return { cat, avg: Math.round(avg * 10) / 10 };
+            }).filter(Boolean).sort((a, b) => b.avg - a.avg);
+
+            this._chart('chart-category', {
+                grid: { top: 10, right: 62, bottom: 20, left: 72 },
+                tooltip: this._tip(p => `${p[0].name}<br/>Ø Mark-up: <b>${p[0].value.toFixed(1)}%</b>`),
+                xAxis: { type: 'value', ...this._axY('%'), axisLabel: { color: '#64748b', fontSize: 10, formatter: v => v + '%' }, max: d => Math.ceil(d.max * 1.2) },
+                yAxis: { type: 'category', data: data.map(c => c.cat),
+                    axisLabel: { color: '#64748b', fontSize: 11 },
+                    axisLine: { show: false }, axisTick: { show: false } },
+                series: [{
+                    type: 'bar', barMaxWidth: 28,
+                    data: data.map(c => ({ value: c.avg,
+                        itemStyle: { color: colors[c.cat] || '#64748b', borderRadius: [0,4,4,0] } })),
+                    label: { show: true, position: 'right', formatter: p => p.value.toFixed(1) + '%',
+                        color: '#94a3b8', fontSize: 11 }
+                }]
+            });
+        },
+
+        refreshRankingChart() {
+            this.sortRanking();
+            const data = [...this.rankingData].reverse();
+            const getV = a => {
+                if (this.sortBy === 'marge_abs')    return a.latest.marge_abs;
+                if (this.sortBy === 'handelsspanne') return a.latest.handelsspanne;
+                return a.latest.marge_pct;
+            };
+            const unit = this.sortBy === 'marge_abs' ? ' €' : ' %';
+            const col  = v => {
+                if (this.sortBy === 'marge_abs') return v > 200 ? '#10B981' : v > 80 ? '#F59E0B' : '#EF4444';
+                return v >= 50 ? '#10B981' : v >= 30 ? '#F59E0B' : '#EF4444';
+            };
+
+            this._chart('chart-ranking', {
+                grid: { top: 8, right: 72, bottom: 20, left: 140 },
+                tooltip: this._tip(p => `${p[0].name}<br/>${p[0].value.toFixed(this.sortBy === 'marge_abs' ? 2 : 1)}${unit}`),
+                xAxis: { type: 'value', ...this._axY(unit),
+                    axisLabel: { color: '#64748b', fontSize: 10, formatter: v => v + unit } },
+                yAxis: { type: 'category', data: data.map(a => a.name),
+                    axisLabel: { color: '#94a3b8', fontSize: 10.5 },
+                    axisLine: { show: false }, axisTick: { show: false } },
+                series: [{
+                    type: 'bar', barMaxWidth: 16,
+                    data: data.map(a => ({ value: getV(a),
+                        itemStyle: { color: col(getV(a)), borderRadius: [0,3,3,0] } })),
+                    label: { show: true, position: 'right',
+                        formatter: p => p.value.toFixed(this.sortBy === 'marge_abs' ? 0 : 1) + unit,
+                        color: '#64748b', fontSize: 10 }
+                }]
+            });
+        },
+
+        // ── DETAIL CHARTS ────────────────────────────────
+        initDetailCharts() {
+            if (!this.selectedArtikel) return;
+            const daily = this.getFiltered(this.selectedArtikel.id);
+            this._chartPriceDetail(daily);
+            this._chartMarginDetail(daily);
+            this._chartEventImpact(daily);
+        },
+
+        _markLines(vkPts, ekPts) {
+            const vk = vkPts.filter(p => p.gueltig_ab >= this.dateStart && p.gueltig_ab <= this.dateEnd)
+                .map(p => ({ xAxis: p.gueltig_ab,
+                    lineStyle: { color: '#3B82F6', type: 'dashed', width: 1, opacity: 0.7 },
+                    label: { formatter: () => 'VK', color: '#3B82F6', fontSize: 9, distance: [0, 2] } }));
+            const ek = ekPts.filter(p => p.gueltig_ab >= this.dateStart && p.gueltig_ab <= this.dateEnd)
+                .map(p => ({ xAxis: p.gueltig_ab,
+                    lineStyle: { color: '#F59E0B', type: 'dashed', width: 1, opacity: 0.7 },
+                    label: { formatter: () => 'EK', color: '#F59E0B', fontSize: 9, distance: [0, 2] } }));
+            return [...vk, ...ek];
+        },
+
+        _chartPriceDetail(daily) {
+            const s = sampleEvery(daily, 7);
+            const ml = this._markLines(this.selectedArtikel.verkaufspreise, this.selectedArtikel.einkaufspreise);
+            this._chart('chart-price-detail', {
+                legend: { top: 0, right: 8, textStyle: { color: '#64748b', fontSize: 10 }, itemWidth: 14, itemHeight: 3 },
+                grid: { top: 28, right: 14, bottom: 50, left: 62 },
+                tooltip: this._tip(params => {
+                    let html = `<div style="color:#64748b;font-size:10px">${params[0].axisValueLabel}</div>`;
+                    params.forEach(p => { html += `${p.marker}${p.seriesName}: <b>${p.data[1].toFixed(2)} €</b><br/>`; });
+                    return html;
+                }),
+                xAxis: this._axX(),
+                yAxis: { ...this._axY(' €'), name: '€' },
+                dataZoom: this._zoom(),
+                series: [
+                    { name: 'VK', type: 'line', symbol: 'none',
+                      data: s.map(d => [d.datum, d.vk]),
+                      lineStyle: { color: '#3B82F6', width: 2.5 },
+                      markLine: { silent: true, symbol: 'none', data: ml.filter(m => m.lineStyle.color === '#3B82F6') } },
+                    { name: 'EK', type: 'line', symbol: 'none',
+                      data: s.map(d => [d.datum, d.ek]),
+                      lineStyle: { color: '#F59E0B', width: 2.5 },
+                      markLine: { silent: true, symbol: 'none', data: ml.filter(m => m.lineStyle.color === '#F59E0B') } },
+                    { name: 'Marge', type: 'line', symbol: 'none',
+                      data: s.map(d => [d.datum, d.marge_abs]),
+                      lineStyle: { color: '#10B981', width: 1.5 },
+                      areaStyle: { color: { type:'linear',x:0,y:0,x2:0,y2:1,
+                          colorStops:[{offset:0,color:'rgba(16,185,129,.2)'},{offset:1,color:'rgba(16,185,129,.02)'}] } } }
+                ]
+            });
+        },
+
+        _chartMarginDetail(daily) {
+            const s = sampleEvery(daily, 7);
+            const series = [
+                { name: 'Mark-up (EK)', type: 'line', symbol: 'none',
+                  data: s.map(d => [d.datum, d.marge_pct]),
+                  lineStyle: { color: '#3B82F6', width: 2.5 } },
+                { name: 'Handelsspanne (VK)', type: 'line', symbol: 'none',
+                  data: s.map(d => [d.datum, d.handelsspanne]),
+                  lineStyle: { color: '#A855F7', width: 2, type: 'dashed' } }
+            ];
+            if (this.showMA) {
+                const ma = sampleEvery(calcMA(daily, this.movingAvg), 7);
+                series.push({ name: `${this.movingAvg}T-MA`, type: 'line', symbol: 'none',
+                    data: ma, lineStyle: { color: '#10B981', width: 1.5, type: 'dotted' } });
+            }
+            this._chart('chart-margin-detail', {
+                legend: { top: 0, right: 8, textStyle: { color: '#64748b', fontSize: 10 }, itemWidth: 14, itemHeight: 3 },
+                grid: { top: 28, right: 14, bottom: 50, left: 54 },
+                tooltip: this._tip(params => {
+                    let html = `<div style="color:#64748b;font-size:10px">${params[0].axisValueLabel}</div>`;
+                    params.forEach(p => { html += `${p.marker}${p.seriesName}: <b>${p.data[1].toFixed(2)} %</b><br/>`; });
+                    return html;
+                }),
+                xAxis: this._axX(),
+                yAxis: { ...this._axY('%'), name: '%' },
+                dataZoom: this._zoom(),
+                series
+            });
+        },
+
+        _chartEventImpact(daily) {
+            const el = document.getElementById('chart-event-impact');
+            if (!el) return;
+
+            const events = [];
+            const addEvents = (pts, type) => {
+                pts.slice(1).forEach(p => {
+                    if (p.gueltig_ab < this.dateStart || p.gueltig_ab > this.dateEnd) return;
+                    const idx = daily.findIndex(d => d.datum >= p.gueltig_ab);
+                    if (idx < 30 || idx > daily.length - 31) return;
+                    const before = daily.slice(idx - 30, idx);
+                    const after  = daily.slice(idx + 1, idx + 31);
+                    const avgB = before.reduce((s, d) => s + d.marge_pct, 0) / before.length;
+                    const avgA = after.reduce((s, d) => s + d.marge_pct, 0) / after.length;
+                    events.push({ label: `${type}-Änd. ${p.gueltig_ab}`, before: avgB, after: avgA, delta: avgA - avgB, type });
+                });
+            };
+            addEvents(this.selectedArtikel.einkaufspreise, 'EK');
+            addEvents(this.selectedArtikel.verkaufspreise, 'VK');
+
+            if (!events.length) {
+                el.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#475569;font-size:13px">Keine Preisänderungen im gewählten Zeitraum</div>';
+                return;
+            }
+
+            this._chart('chart-event-impact', {
+                legend: { bottom: 0, textStyle: { color: '#64748b', fontSize: 10 }, itemWidth: 12, itemHeight: 8 },
+                grid: { top: 8, right: 20, bottom: 32, left: 130 },
+                tooltip: {
+                    trigger: 'axis', backgroundColor: '#1e293b', borderColor: '#334155',
+                    textStyle: { color: '#e2e8f0', fontSize: 11 },
+                    formatter: params => {
+                        const ev = events[params[0].dataIndex];
+                        const sign = ev.delta >= 0 ? '+' : '';
+                        return `<b>${ev.label}</b><br/>Ø 30T vorher: ${ev.before.toFixed(1)}%<br/>Ø 30T nachher: ${ev.after.toFixed(1)}%<br/>Δ: <b style="color:${ev.delta>=0?'#10B981':'#EF4444'}">${sign}${ev.delta.toFixed(1)}pp</b>`;
+                    }
+                },
+                xAxis: { type: 'value', ...this._axY('%'), axisLabel: { color: '#64748b', fontSize: 10, formatter: '{value}%' } },
+                yAxis: { type: 'category', data: events.map(e => e.label),
+                    axisLabel: { color: '#94a3b8', fontSize: 10 },
+                    axisLine: { show: false }, axisTick: { show: false } },
+                series: [
+                    { name: '30T vorher', type: 'bar', barWidth: 10,
+                      data: events.map(e => ({ value: e.before, itemStyle: { color: '#334155', borderRadius: [0,2,2,0] } })) },
+                    { name: '30T nachher', type: 'bar', barWidth: 10, barGap: '30%',
+                      data: events.map(e => ({ value: e.after,
+                          itemStyle: { color: e.delta >= 0 ? '#10B981' : '#EF4444', borderRadius: [0,2,2,0] } })) }
+                ]
+            });
+        },
+
+        // ── COMPARISON CHART ─────────────────────────────
+        initComparisonChart() {
+            const el = document.getElementById('chart-comparison');
+            if (!el) return;
+
+            if (!this.compareArtikel.length) {
+                el.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#475569;font-size:13px">Mindestens einen Artikel auswählen</div>';
+                if (this._charts['chart-comparison']) {
+                    this._charts['chart-comparison'].dispose();
+                    delete this._charts['chart-comparison'];
+                }
+                return;
+            }
+
+            const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#A855F7', '#EF4444'];
+
+            // Build portfolio avg map for 'diff' mode
+            const portMap = {};
+            this.portfolioData.forEach(d => { portMap[d.datum] = d.avg; });
+
+            const series = this.compareArtikel.map((a, i) => {
+                const daily = this.getFiltered(a.id);
+                const s = sampleEvery(daily, 7);
+                let data;
+                if (this.compareMode === 'normalized') {
+                    const base = s[0]?.marge_pct || 100;
+                    data = s.map(d => [d.datum, Math.round(d.marge_pct / base * 10000) / 100]);
+                } else if (this.compareMode === 'diff') {
+                    data = s.map(d => [d.datum, Math.round((d.marge_pct - (portMap[d.datum] || 0)) * 100) / 100]);
+                } else {
+                    data = s.map(d => [d.datum, d.marge_pct]);
+                }
+                return { name: a.name, type: 'line', symbol: 'none', smooth: 0.2, data,
+                    lineStyle: { color: COLORS[i], width: 2 } };
+            });
+
+            const yLabel = this.compareMode === 'normalized' ? 'Index (Start=100)' : this.compareMode === 'diff' ? 'Δ Ø-Portfolio (pp)' : 'Mark-up %';
+
+            this._chart('chart-comparison', {
+                legend: { top: 0, type: 'scroll', textStyle: { color: '#94a3b8', fontSize: 11 }, itemWidth: 16, itemHeight: 3 },
+                grid: { top: 36, right: 20, bottom: 50, left: 58 },
+                tooltip: this._tip(params => {
+                    let html = `<div style="color:#64748b;font-size:10px">${params[0].axisValueLabel}</div>`;
+                    params.forEach(p => { html += `${p.marker}${p.seriesName}: <b>${p.data[1].toFixed(1)}</b><br/>`; });
+                    return html;
+                }),
+                xAxis: this._axX(),
+                yAxis: { ...this._axY(this.compareMode === 'normalized' ? '' : '%'), name: yLabel },
+                dataZoom: this._zoom(),
+                series
+            });
+        },
+
+        // ── PORTFOLIO CHARTS ─────────────────────────────
+        initPortfolioCharts() {
+            this._chartHistogram();
+            this._chartCatBars();
+            this._chartHeatmap();
+            this._chartVolatility();
+        },
+
+        _chartHistogram() {
+            const vals = this.rankingData.map(a => a.latest.marge_pct);
+            const bins = [
+                { lbl: '< 20%', min: 0, max: 20 }, { lbl: '20–30%', min: 20, max: 30 },
+                { lbl: '30–40%', min: 30, max: 40 }, { lbl: '40–50%', min: 40, max: 50 },
+                { lbl: '50–70%', min: 50, max: 70 }, { lbl: '70–100%', min: 70, max: 100 },
+                { lbl: '> 100%', min: 100, max: Infinity }
+            ].map(b => ({ ...b, n: vals.filter(v => v >= b.min && v < b.max).length }));
+            const binsF = bins.filter(b => b.n > 0);
+
+            this._chart('chart-histogram', {
+                grid: { top: 20, right: 20, bottom: 36, left: 40 },
+                tooltip: this._tip(p => `${p[0].name}<br/>Artikel: <b>${p[0].value}</b>`),
+                xAxis: { type: 'category', data: binsF.map(b => b.lbl),
+                    axisLabel: { color: '#64748b', fontSize: 11 },
+                    axisLine: { show: false }, axisTick: { show: false } },
+                yAxis: { type: 'value', name: 'Anz.', nameTextStyle: { color: '#64748b', fontSize: 10 },
+                    ...this._axY(''), axisLabel: { color: '#64748b', fontSize: 11, formatter: '{value}' },
+                    minInterval: 1 },
+                series: [{
+                    type: 'bar', barMaxWidth: 50,
+                    data: binsF.map(b => ({ value: b.n,
+                        itemStyle: { color: b.min >= 70 ? '#10B981' : b.min >= 40 ? '#3B82F6' : b.min >= 20 ? '#F59E0B' : '#EF4444',
+                                     borderRadius: [3,3,0,0] } })),
+                    label: { show: true, position: 'top', color: '#94a3b8', fontSize: 12 }
+                }]
+            });
+        },
+
+        _chartCatBars() {
+            const cols = { 'MIG/MAG': '#3B82F6', 'WIG/TIG': '#A855F7', 'Elektrode': '#F59E0B', 'Plasma': '#06B6D4', 'Multi': '#10B981' };
+            const data = this.allCategories.map(cat => {
+                const arts = this.rankingData.filter(a => a.kategorie === cat);
+                if (!arts.length) return null;
+                const avgM = arts.reduce((s, a) => s + a.stats.avgMarkup, 0) / arts.length;
+                const avgH = arts.reduce((s, a) => s + a.stats.avgHS, 0) / arts.length;
+                return { cat, avgM: Math.round(avgM*10)/10, avgH: Math.round(avgH*10)/10 };
+            }).filter(Boolean);
+
+            this._chart('chart-catbars', {
+                legend: { bottom: 0, textStyle: { color: '#64748b', fontSize: 10 }, itemWidth: 12, itemHeight: 10 },
+                grid: { top: 10, right: 14, bottom: 36, left: 50 },
+                tooltip: this._tip(params => {
+                    const cat = params[0].name;
+                    return `<b>${cat}</b><br/>` +
+                        params.map(p => `${p.marker}${p.seriesName}: <b>${p.value.toFixed(1)}%</b>`).join('<br/>');
+                }),
+                xAxis: { type: 'category', data: data.map(c => c.cat),
+                    axisLabel: { color: '#64748b', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false } },
+                yAxis: { type: 'value', ...this._axY('%'), axisLabel: { color: '#64748b', fontSize: 11, formatter: '{value}%' } },
+                series: [
+                    { name: 'Ø Mark-up', type: 'bar', barMaxWidth: 28,
+                      data: data.map(c => ({ value: c.avgM, itemStyle: { color: cols[c.cat], opacity: 1, borderRadius: [3,3,0,0] } })),
+                      label: { show: true, position: 'top', formatter: p => p.value.toFixed(0) + '%', color: '#94a3b8', fontSize: 10 } },
+                    { name: 'Ø Handelsspanne', type: 'bar', barMaxWidth: 28,
+                      data: data.map(c => ({ value: c.avgH, itemStyle: { color: cols[c.cat], opacity: 0.45, borderRadius: [3,3,0,0] } })),
+                      label: { show: true, position: 'top', formatter: p => p.value.toFixed(0) + '%', color: '#94a3b8', fontSize: 10 } }
+                ]
+            });
+        },
+
+        _chartHeatmap() {
+            const arts = this.rankingData;
+            const months = [];
+            let d = new Date(this.dateStart);
+            const ed = new Date(this.dateEnd);
+            while (d <= ed) {
+                months.push(d.toISOString().slice(0, 7));
+                d.setMonth(d.getMonth() + 1);
+            }
+
+            let mn = Infinity, mx = -Infinity;
+            const hd = [];
+            arts.forEach((a, ai) => {
+                const daily = this.getFiltered(a.id);
+                const mmap = {};
+                daily.forEach(d => {
+                    const m = d.datum.slice(0, 7);
+                    if (!mmap[m]) mmap[m] = { s: 0, c: 0 };
+                    mmap[m].s += d.marge_pct; mmap[m].c++;
+                });
+                months.forEach((m, mi) => {
+                    if (!mmap[m]) return;
+                    const v = Math.round(mmap[m].s / mmap[m].c * 10) / 10;
+                    hd.push([mi, ai, v]);
+                    if (v < mn) mn = v;
+                    if (v > mx) mx = v;
+                });
+            });
+
+            const xLabels = months.map(m => {
+                const d = new Date(m + '-01');
+                return d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+            });
+
+            this._chart('chart-heatmap', {
+                grid: { top: 8, right: 90, bottom: 56, left: 128 },
+                tooltip: {
+                    position: 'top', backgroundColor: '#1e293b', borderColor: '#334155',
+                    textStyle: { color: '#e2e8f0', fontSize: 11 },
+                    formatter: p => {
+                        if (!Array.isArray(p.data)) return '';
+                        return `<b>${arts[p.data[1]]?.name}</b><br/>${months[p.data[0]]}<br/>Ø Mark-up: <b>${p.data[2].toFixed(1)}%</b>`;
+                    }
+                },
+                xAxis: { type: 'category', data: xLabels, splitArea: { show: true, areaStyle: { color: ['rgba(255,255,255,.01)', 'transparent'] } },
+                    axisLabel: { color: '#475569', fontSize: 9, interval: Math.max(0, Math.floor(months.length / 14) - 1), rotate: 35 },
+                    axisLine: { show: false }, axisTick: { show: false } },
+                yAxis: { type: 'category', data: arts.map(a => a.name), splitArea: { show: true, areaStyle: { color: ['rgba(255,255,255,.01)', 'transparent'] } },
+                    axisLabel: { color: '#64748b', fontSize: 10 }, axisLine: { show: false }, axisTick: { show: false } },
+                visualMap: { min: mn, max: mx, orient: 'vertical', right: 8, top: 'middle',
+                    calculable: true, textStyle: { color: '#64748b', fontSize: 9 },
+                    inRange: { color: ['#0f172a', '#064e3b', '#10B981', '#a7f3d0'] } },
+                series: [{ type: 'heatmap', data: hd,
+                    label: { show: false },
+                    emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,.5)' } } }]
+            });
+        },
+
+        _chartVolatility() {
+            const data = [...this.rankingData].sort((a, b) => b.stats.stddev - a.stats.stddev).reverse();
+            this._chart('chart-volatility', {
+                grid: { top: 8, right: 80, bottom: 20, left: 140 },
+                tooltip: this._tip(p => `${p[0].name}<br/>Std.-Abw.: <b>±${p[0].value.toFixed(2)} pp</b>`),
+                xAxis: { type: 'value', ...this._axY(' pp'), name: 'Standardabw. (pp)',
+                    axisLabel: { color: '#64748b', fontSize: 10, formatter: '±{value}pp' } },
+                yAxis: { type: 'category', data: data.map(a => a.name),
+                    axisLabel: { color: '#94a3b8', fontSize: 10.5 },
+                    axisLine: { show: false }, axisTick: { show: false } },
+                series: [{
+                    type: 'bar', barMaxWidth: 16,
+                    data: data.map(a => ({ value: Math.round(a.stats.stddev * 100) / 100,
+                        itemStyle: { color: a.stats.stddev > 5 ? '#EF4444' : a.stats.stddev > 2 ? '#F59E0B' : '#10B981',
+                                     borderRadius: [0,3,3,0] } })),
+                    label: { show: true, position: 'right',
+                        formatter: p => `±${p.value.toFixed(2)}pp`, color: '#64748b', fontSize: 10 }
+                }]
+            });
+        }
+    };
+}
+</script>
+
+</body>
+</html>
