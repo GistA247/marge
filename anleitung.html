@@ -99,6 +99,7 @@
         <a href="#verkauf"      class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">09</span>Verkaufszahlen</a>
         <a href="#szenarien"    class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">10</span>Szenarien</a>
         <a href="#tipps"        class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">11</span>Tipps &amp; Tricks</a>
+        <a href="#phase5"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">12</span>Neue Features</a>
     </nav>
 
     <!-- ── MAIN CONTENT ───────────────────────────────────── -->
@@ -326,6 +327,9 @@
             <h3>Artikeltyp-Filter</h3>
             <p>Drei Modi: <strong>Alle</strong> zeigt das gesamte Sortiment. <strong>Einzel</strong> schließt alle SET-Artikel aus. <strong>SET</strong> zeigt nur gebündelte Pakete. Der Filter wirkt auf alle Charts und die Artikelliste.</p>
 
+            <h3>Leistungsklassen-Filter</h3>
+            <p>Segmentiert das Sortiment nach der Nennleistung des Schweißgeräts in vier Stufen: <strong>Alle</strong>, <strong>&lt; 3 kW</strong>, <strong>3–6 kW</strong> und <strong>&gt; 6 kW</strong>. Der Filter wirkt zusammen mit allen anderen Filtern (Kategorien, Typ, Schwelle) und wird ebenfalls im LocalStorage gespeichert — bleibt also beim nächsten Besuch erhalten.</p>
+
             <h3>Ranking-Sortierung (nur Dashboard)</h3>
             <p>Erscheint nur im Dashboard-View. Bestimmt, nach welcher Kennzahl die Artikel im Ranking-Chart und in der Top/Flop-Tabelle sortiert werden:</p>
             <ul class="list-disc list-inside space-y-1 mt-1">
@@ -369,6 +373,30 @@
             <h3>Alert-Banner</h3>
             <p>Wenn die Marge-Schwelle in der Sidebar auf einen Wert &gt; 0 gesetzt ist und mindestens ein Artikel darunter fällt, erscheint <strong>oben im Dashboard ein roter Banner</strong> mit den Namen aller betroffenen Artikel. Klick auf einen Artikel-Link öffnet direkt die Detailansicht.</p>
 
+            <h3>Auto-Insightbox</h3>
+            <p>Unterhalb der KPI-Karten erscheint eine automatisch befüllte Insights-Leiste mit bis zu <strong>vier Hinweisen</strong>, die das System auf Basis der aktuellen Filterdaten berechnet:</p>
+            <div class="grid grid-cols-2 gap-3 mt-2">
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-red-400 mb-1">Stärkste Kompression</div>
+                    <p class="mb-0 text-xs">Artikel, bei dem der Mark-up im gewählten Zeitraum am stärksten gesunken ist. Wichtiger Frühindikator für Handlungsbedarf.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-emerald-400 mb-1">Stärkste Verbesserung</div>
+                    <p class="mb-0 text-xs">Artikel mit dem höchsten Mark-up-Anstieg im Zeitraum — nützlich, um erfolgreiche Preisanpassungen zu identifizieren.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-amber-400 mb-1">Unter 30 % Mark-up</div>
+                    <p class="mb-0 text-xs">Anzahl Artikel mit aktuellem Mark-up unter 30 %. Erscheint nur, wenn mindestens ein solcher Artikel im gefilterten Sortiment vorhanden ist.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-purple-400 mb-1">Höchste Volatilität</div>
+                    <p class="mb-0 text-xs">Artikel mit der größten Standardabweichung des Mark-up — instabile Preislage, erfordert häufiges Monitoring.</p>
+                </div>
+            </div>
+            <div class="callout callout-blue mt-3">
+                <strong>Hinweis:</strong> Die Insightbox aktualisiert sich bei jeder Filter-Änderung sofort. Ist ein Insight nicht anwendbar (z. B. kein Artikel unter 30 %), wird er ausgeblendet.
+            </div>
+
             <h3>Portfolio-Trendchart</h3>
             <p>Zeitreihe des <strong>Ø Mark-up aller gefilterten Artikel</strong> über den gewählten Zeitraum. Datenpunkt = monatliches Mittel. Die grüne Fläche unter der Linie zeigt die Entwicklung des gesamten Portfolios auf einen Blick.</p>
             <p><strong>DataZoom:</strong> Unterhalb des Charts befindet sich ein Zoom-Schieberegler. Der Bereich kann auch mit dem Mausrad gezoomt und per Drag verschoben werden.</p>
@@ -379,6 +407,7 @@
 
             <h3>Artikel-Ranking</h3>
             <p>Alle gefilterten Artikel sortiert nach der in der Sidebar gewählten Kennzahl. Die Balkenlänge entspricht dem Wert, die Farbe gibt die Margenqualität an (grün / amber / rot). Die Sortierung kann jederzeit in der Sidebar umgeschaltet werden. Wenn eine Marge-Schwelle gesetzt ist, erscheint eine <strong>rote Referenzlinie</strong> im Chart.</p>
+            <p><strong>Drill-Down per Klick:</strong> Ein Klick auf einen Balken im Ranking-Chart öffnet direkt die <strong>Artikel-Detail-Ansicht</strong> für diesen Artikel — ohne Umweg über die Artikelliste. Der Mauszeiger wechselt zu einem Zeiger-Symbol, um die Interaktivität anzuzeigen.</p>
             <p><strong>Export:</strong> PNG-Button im Chart-Header; CSV-Button im Ranking-Header exportiert alle Artikelwerte als Excel-kompatible Datei (Semikolon-getrennt, UTF-8 BOM).</p>
 
             <h3>Top &amp; Flop 5 (Tabelle rechts)</h3>
@@ -397,13 +426,14 @@
             <p>Das Dropdown oben zeigt alle 35 Artikel (ID + Name). Wechseln des Artikels aktualisiert sofort alle Charts und Statistiken. Die Breadcrumb-Navigation "← Dashboard" führt zurück zur Übersicht.</p>
 
             <h3>Header-Karte</h3>
-            <p>Zeigt Kategorie-Badge, SET-Badge (falls zutreffend), Artikel-ID, Leistung in kW und das Szenario-Label (falls vorhanden). Rechts die vier aktuellen KPIs: EK, VK, Mark-up und Handelsspanne.</p>
+            <p>Zeigt Kategorie-Badge, SET-Badge (falls zutreffend), Artikel-ID, Leistung in kW und — falls vorhanden — das <strong>Szenario-Label</strong>. Das Szenario-Label erscheint als Amber-Badge mit ⓘ-Icon (z. B. <span class="badge" style="background:#451a03;color:#fcd34d">ⓘ Margenkompression</span>) und macht auf einen Blick sichtbar, welches typische Preisszenario der Artikel repräsentiert. Rechts die vier aktuellen KPIs: EK, VK, Mark-up und Handelsspanne.</p>
 
             <h3>SET-Zusammensetzung</h3>
             <p>Nur bei SET-Artikeln sichtbar: Alle Komponenten mit ihrem Anteil am Haupt-EK. Komponenten mit eigener Artikel-ID (Hauptgeräte) sind blau markiert, Zubehör ohne ID grau. Die Statistik bezieht sich immer auf den Gesamtartikelpreis, nicht auf Einzelkomponenten.</p>
 
             <h3>Preisentwicklungs-Chart (links)</h3>
             <p>Zeitreihe mit drei Linien: <strong class="text-blue-400">VK (blau)</strong>, <strong class="text-amber-400">EK (gelb)</strong>, <strong class="text-emerald-400">Marge absolut (grün)</strong>. Vertikale Markierungslinien zeigen exakt, wann sich EK oder VK geändert haben. Nützlich, um Margenlücken nach EK-Erhöhungen zu erkennen. PNG-Export über den Button im Chart-Header.</p>
+            <p><strong>Rohertrag-Toggle:</strong> Der Button <strong>„Rohertrag"</strong> im Chart-Header blendet eine zusätzliche Ansicht ein — kumulierter Rohertrag (Stück × Marge abs.) als Balken auf einer <strong>sekundären Y-Achse rechts</strong>. Ist gleichzeitig die Prognose aktiv, verlängert sich die Rohertrag-Kurve als gestrichelte Linie in die Zukunft. Nützlich, um den Zusammenhang zwischen Margenqualität und tatsächlichem Rohertragsvolumen zu verstehen.</p>
 
             <h3>Lineare Prognose (Preisentwicklung)</h3>
             <p>Der <strong>„Prognose"-Button</strong> im Header des Preisentwicklungs-Charts aktiviert eine lineare Extrapolation für VK und EK. Sobald aktiv, erscheint ein Dropdown zur Auswahl der Regressionsbasis (<strong>30T / 60T / 90T</strong>).</p>
@@ -515,20 +545,20 @@
                 <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">08</span>
                 <h2>Portfolio-Analyse</h2>
             </div>
-            <p>Die Portfolio-Ansicht bietet vier aggregierte Charts für das gesamte gefilterte Sortiment.</p>
+            <p>Die Portfolio-Ansicht bietet vier aggregierte Charts für das gesamte gefilterte Sortiment. Jeder Chart lässt sich per <strong>PNG-Button</strong> im Chart-Header exportieren (2× Pixeldichte, dunkler Hintergrund).</p>
 
             <h3>Margenverteilung (Histogramm)</h3>
-            <p>Balkendiagramm, das zeigt, wie viele Artikel aktuell in welches Mark-up-Intervall fallen. Die Bins (<em class="text-slate-400">Eimergrenzen</em>) sind: &lt;20 %, 20–30 %, 30–40 %, 40–50 %, 50–70 %, 70–100 %, &gt;100 %. Farbe pro Bin: rot (niedrig) → blau → grün (hoch). Nützlich, um die Margenstruktur des Portfolios zu verstehen.</p>
+            <p>Balkendiagramm, das zeigt, wie viele Artikel aktuell in welches Mark-up-Intervall fallen. Die Bins (<em class="text-slate-400">Eimergrenzen</em>) sind: &lt;20 %, 20–30 %, 30–40 %, 40–50 %, 50–70 %, 70–100 %, &gt;100 %. Farbe pro Bin: rot (niedrig) → blau → grün (hoch). Nützlich, um die Margenstruktur des Portfolios zu verstehen. PNG-Export über den Button im Chart-Header.</p>
 
             <h3>Kategorien-Vergleich</h3>
-            <p>Gruppierte Balken pro Kategorie: <strong>Ø Mark-up</strong> (volle Sättigung) und <strong>Ø Handelsspanne</strong> (halbe Sättigung) nebeneinander. Zeigt, welche Kategorien strukturell margenstarker sind.</p>
+            <p>Gruppierte Balken pro Kategorie: <strong>Ø Mark-up</strong> (volle Sättigung) und <strong>Ø Handelsspanne</strong> (halbe Sättigung) nebeneinander. Zeigt, welche Kategorien strukturell margenstarker sind. PNG-Export über den Button im Chart-Header.</p>
 
             <h3>Monats-Heatmap</h3>
             <p>Matrix aus Artikeln (Y-Achse) × Monaten (X-Achse). Jede Zelle enthält den Ø Mark-up dieses Artikels in diesem Monat. Die Farbskala reicht von dunkel (niedrige Marge) über grün bis hellgrün (hohe Marge). Die <strong>visualMap-Legende</strong> rechts zeigt die Skala; sie ist verschiebbar (Drag).</p>
-            <p>Auf einen Blick erkennbar: saisonale Rabatt-Aktionen (Spalten mit abrupt niedrigeren Werten), EK-Schocks (Zeilen, die ab einem Datum dunkler werden) und dauerhaft margenstarke oder -schwache Artikel.</p>
+            <p>Auf einen Blick erkennbar: saisonale Rabatt-Aktionen (Spalten mit abrupt niedrigeren Werten), EK-Schocks (Zeilen, die ab einem Datum dunkler werden) und dauerhaft margenstarke oder -schwache Artikel. PNG-Export über den Button im Chart-Header.</p>
 
             <h3>Volatilitäts-Ranking</h3>
-            <p>Alle Artikel sortiert nach der <strong>Standardabweichung des Mark-up</strong> im gewählten Zeitraum. Grüne Balken = stabile Marge (Stddev &lt; 2 pp), amber = moderat (2–5 pp), rot = volatil (&gt; 5 pp). Volatile Artikel erfordern häufigere Preisanpassungen.</p>
+            <p>Alle Artikel sortiert nach der <strong>Standardabweichung des Mark-up</strong> im gewählten Zeitraum. Grüne Balken = stabile Marge (Stddev &lt; 2 pp), amber = moderat (2–5 pp), rot = volatil (&gt; 5 pp). Volatile Artikel erfordern häufigere Preisanpassungen. PNG-Export über den Button im Chart-Header.</p>
         </section>
 
         <!-- ════ 09 VERKAUFSZAHLEN ════════════════════════════ -->
@@ -713,6 +743,60 @@
                 <li>Prognose und Korrelation basieren auf dem gefilterten Zeitraum — sehr kurze Zeiträume (&lt; 30 Tage) liefern wenig aussagekräftige Ergebnisse.</li>
             </ul>
 
+        </section>
+
+        <!-- ════ 12 NEUE FEATURES (Phase 5) ═══════════════════ -->
+        <section id="phase5" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">12</span>
+                <h2>Neue Features — Kurzübersicht</h2>
+            </div>
+            <p>Folgende Funktionen wurden in Phase 5 ergänzt und sind in den jeweiligen Abschnitten oben detailliert beschrieben:</p>
+
+            <div class="space-y-3 mt-3">
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-blue-400 text-lg leading-none mt-0.5">↗</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Drill-Down aus dem Ranking-Chart</div>
+                        <p class="mb-0 text-xs mt-0.5">Klick auf einen Balken im Artikel-Ranking öffnet sofort die Detailansicht dieses Artikels. → <a href="#dashboard">Abschnitt 05</a></p>
+                    </div>
+                </div>
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-emerald-400 text-lg leading-none mt-0.5">€</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Rohertrag-Toggle im Preisentwicklungs-Chart</div>
+                        <p class="mb-0 text-xs mt-0.5">Blendet kumulierten Rohertrag als Balken (sekundäre Y-Achse) ein; bei aktiver Prognose verlängert als gestrichelte Linie. → <a href="#detail">Abschnitt 06</a></p>
+                    </div>
+                </div>
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-purple-400 text-lg leading-none mt-0.5">⬇</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">PNG-Export für alle Portfolio-Charts</div>
+                        <p class="mb-0 text-xs mt-0.5">Histogramm, Kategorien-Vergleich, Monats-Heatmap und Volatilitäts-Ranking haben je einen eigenen PNG-Export-Button. → <a href="#portfolio">Abschnitt 08</a></p>
+                    </div>
+                </div>
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-amber-400 text-lg leading-none mt-0.5">ⓘ</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Szenario-Label als Amber-Badge</div>
+                        <p class="mb-0 text-xs mt-0.5">Das Szenario-Label im Artikel-Detail-Header erscheint jetzt als farbiger Badge mit ⓘ-Icon statt als kursivem Text. → <a href="#detail">Abschnitt 06</a></p>
+                    </div>
+                </div>
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-cyan-400 text-lg leading-none mt-0.5">⚡</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Leistungsklassen-Filter in der Sidebar</div>
+                        <p class="mb-0 text-xs mt-0.5">Neuer Segmented-Button: Alle / &lt; 3 kW / 3–6 kW / &gt; 6 kW. Persistiert im LocalStorage. → <a href="#filter">Abschnitt 04</a></p>
+                    </div>
+                </div>
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-slate-300 text-lg leading-none mt-0.5">💡</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Auto-Insightbox im Dashboard</div>
+                        <p class="mb-0 text-xs mt-0.5">Bis zu vier automatisch berechnete Hinweise: stärkste Kompression, stärkste Verbesserung, Artikel unter 30 %, höchste Volatilität. → <a href="#dashboard">Abschnitt 05</a></p>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Footer -->
