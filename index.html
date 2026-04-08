@@ -547,12 +547,29 @@
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                     <div class="flex items-start justify-between mb-1">
                         <h3 class="text-sm font-semibold">Preisentwicklung (€)</h3>
-                        <button @click="exportChartPNG('chart-price-detail', 'preisentwicklung_' + (selectedArtikel?.id || ''))"
-                            title="Als PNG exportieren"
-                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
-                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            PNG
-                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <template x-if="showForecast">
+                                <select x-model.number="forecastBasis" @change="$nextTick(() => initDetailCharts())"
+                                    class="bg-slate-800 border border-slate-700 text-slate-400 text-xs rounded px-1.5 py-0.5 focus:outline-none cursor-pointer">
+                                    <option :value="30">Basis 30T</option>
+                                    <option :value="60">Basis 60T</option>
+                                    <option :value="90">Basis 90T</option>
+                                </select>
+                            </template>
+                            <button @click="showForecast = !showForecast; $nextTick(() => initDetailCharts())"
+                                :class="showForecast ? 'bg-purple-900/40 border-purple-600 text-purple-300' : 'border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'"
+                                class="text-xs border rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0"
+                                title="Lineare Prognose ein-/ausblenden">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                                Prognose
+                            </button>
+                            <button @click="exportChartPNG('chart-price-detail', 'preisentwicklung_' + (selectedArtikel?.id || ''))"
+                                title="Als PNG exportieren"
+                                class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                PNG
+                            </button>
+                        </div>
                     </div>
                     <p class="text-xs text-slate-500 mb-3">EK · VK · Marge absolut | Markierungen = Preisänderungen</p>
                     <div id="chart-price-detail" class="echart h-64"></div>
@@ -748,6 +765,22 @@
             <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                 <div id="chart-comparison" class="echart h-96"
                     x-text="compareArtikel.length === 0 ? 'Mindestens einen Artikel auswählen ...' : ''"></div>
+            </div>
+
+            <!-- Korrelationsmatrix -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4" x-show="compareArtikel.length >= 2">
+                <div class="flex items-start justify-between mb-1">
+                    <div>
+                        <h3 class="text-sm font-semibold">Korrelationsmatrix</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Pearson-Korrelation der Margenverläufe zwischen gewählten Artikeln</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                        <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:#10B981"></span>+1 stark positiv</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:#475569"></span>0 kein Zsh.</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:#EF4444"></span>−1 stark negativ</span>
+                    </div>
+                </div>
+                <div id="chart-correlation" class="echart" :style="'height:' + Math.max(220, compareArtikel.length * 52 + 60) + 'px'"></div>
             </div>
         </div>
 
@@ -1623,6 +1656,8 @@ function dashboard() {
         marginThreshold: 0,
         movingAvg: 30,
         showMA: true,
+        showForecast: false,
+        forecastBasis: 60,
         sortBy: 'marge_pct',
         typeFilter: 'alle',
         activeQuickFilter: 36,
@@ -1988,35 +2023,98 @@ function dashboard() {
             return [...vk, ...ek];
         },
 
+        // ── LINEAR REGRESSION ────────────────────────────
+        _linReg(pts) {
+            // pts: [{x, y}] — x = day index
+            const n = pts.length;
+            if (n < 2) return { slope: 0, intercept: pts[0]?.y || 0, rmse: 0 };
+            let sx = 0, sy = 0, sxy = 0, sxx = 0;
+            pts.forEach(p => { sx += p.x; sy += p.y; sxy += p.x * p.y; sxx += p.x * p.x; });
+            const denom = n * sxx - sx * sx;
+            const slope = denom === 0 ? 0 : (n * sxy - sx * sy) / denom;
+            const intercept = (sy - slope * sx) / n;
+            const rmse = Math.sqrt(pts.reduce((acc, p) => acc + Math.pow(p.y - (slope * p.x + intercept), 2), 0) / n);
+            return { slope, intercept, rmse };
+        },
+
         _chartPriceDetail(daily) {
             const s = sampleEvery(daily, 7);
             const ml = this._markLines(this.selectedArtikel.verkaufspreise, this.selectedArtikel.einkaufspreise);
+
+            const series = [
+                { name: 'VK', type: 'line', symbol: 'none',
+                  data: s.map(d => [d.datum, d.vk]),
+                  lineStyle: { color: '#3B82F6', width: 2.5 },
+                  markLine: { silent: true, symbol: 'none', data: ml.filter(m => m.lineStyle.color === '#3B82F6') } },
+                { name: 'EK', type: 'line', symbol: 'none',
+                  data: s.map(d => [d.datum, d.ek]),
+                  lineStyle: { color: '#F59E0B', width: 2.5 },
+                  markLine: { silent: true, symbol: 'none', data: ml.filter(m => m.lineStyle.color === '#F59E0B') } },
+                { name: 'Marge', type: 'line', symbol: 'none',
+                  data: s.map(d => [d.datum, d.marge_abs]),
+                  lineStyle: { color: '#10B981', width: 1.5 },
+                  areaStyle: { color: { type:'linear',x:0,y:0,x2:0,y2:1,
+                      colorStops:[{offset:0,color:'rgba(16,185,129,.2)'},{offset:1,color:'rgba(16,185,129,.02)'}] } } }
+            ];
+
+            const legendNames = ['VK', 'EK', 'Marge'];
+
+            if (this.showForecast && daily.length >= 7) {
+                const basis = Math.min(this.forecastBasis, daily.length);
+                const reg = daily.slice(-basis);
+                const n = reg.length;
+                const vkReg = this._linReg(reg.map((d, i) => ({ x: i, y: d.vk })));
+                const ekReg = this._linReg(reg.map((d, i) => ({ x: i, y: d.ek })));
+
+                const horizon = 30;
+                const ci = 1.645; // 90 % CI
+                const lastDate = dayjs(daily[daily.length - 1].datum);
+                const future = Array.from({ length: horizon }, (_, i) =>
+                    lastDate.add(i + 1, 'day').format('YYYY-MM-DD'));
+
+                const vkF  = future.map((d, i) => [d, Math.round((vkReg.slope * (n + i) + vkReg.intercept) * 100) / 100]);
+                const ekF  = future.map((d, i) => [d, Math.round((ekReg.slope * (n + i) + ekReg.intercept) * 100) / 100]);
+                const vkLo = future.map((d, i) => [d, Math.max(0, Math.round((vkReg.slope * (n + i) + vkReg.intercept - ci * vkReg.rmse) * 100) / 100)]);
+                const vkHi = future.map((d, i) => [d, Math.round((vkReg.slope * (n + i) + vkReg.intercept + ci * vkReg.rmse) * 100) / 100]);
+                const ekLo = future.map((d, i) => [d, Math.max(0, Math.round((ekReg.slope * (n + i) + ekReg.intercept - ci * ekReg.rmse) * 100) / 100)]);
+                const ekHi = future.map((d, i) => [d, Math.round((ekReg.slope * (n + i) + ekReg.intercept + ci * ekReg.rmse) * 100) / 100]);
+                const vkBand = future.map((d, i) => [d, Math.round((vkHi[i][1] - vkLo[i][1]) * 100) / 100]);
+                const ekBand = future.map((d, i) => [d, Math.round((ekHi[i][1] - ekLo[i][1]) * 100) / 100]);
+
+                legendNames.push('VK Prognose', 'EK Prognose');
+                series.push(
+                    // VK CI band (stacked: transparent base + colored band)
+                    { type: 'line', symbol: 'none', data: vkLo, stack: 'ci_vk',
+                      lineStyle: { opacity: 0 }, areaStyle: { color: 'transparent' }, silent: true, tooltip: { show: false } },
+                    { type: 'line', symbol: 'none', data: vkBand, stack: 'ci_vk',
+                      lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(59,130,246,0.13)' }, silent: true, tooltip: { show: false } },
+                    // VK forecast line
+                    { name: 'VK Prognose', type: 'line', symbol: 'none', data: vkF,
+                      lineStyle: { color: '#3B82F6', width: 2, type: 'dashed', opacity: 0.85 } },
+                    // EK CI band
+                    { type: 'line', symbol: 'none', data: ekLo, stack: 'ci_ek',
+                      lineStyle: { opacity: 0 }, areaStyle: { color: 'transparent' }, silent: true, tooltip: { show: false } },
+                    { type: 'line', symbol: 'none', data: ekBand, stack: 'ci_ek',
+                      lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(245,158,11,0.12)' }, silent: true, tooltip: { show: false } },
+                    // EK forecast line
+                    { name: 'EK Prognose', type: 'line', symbol: 'none', data: ekF,
+                      lineStyle: { color: '#F59E0B', width: 2, type: 'dashed', opacity: 0.85 } }
+                );
+            }
+
             this._chart('chart-price-detail', {
-                legend: { top: 0, right: 8, textStyle: { color: '#64748b', fontSize: 10 }, itemWidth: 14, itemHeight: 3 },
+                legend: { top: 0, right: 8, textStyle: { color: '#64748b', fontSize: 10 }, itemWidth: 14, itemHeight: 3,
+                    data: legendNames },
                 grid: { top: 28, right: 14, bottom: 50, left: 62 },
                 tooltip: this._tip(params => {
                     let html = `<div style="color:#64748b;font-size:10px">${params[0].axisValueLabel}</div>`;
-                    params.forEach(p => { html += `${p.marker}${p.seriesName}: <b>${p.data[1].toFixed(2)} €</b><br/>`; });
+                    params.filter(p => p.seriesName).forEach(p => { html += `${p.marker}${p.seriesName}: <b>${p.data[1].toFixed(2)} €</b><br/>`; });
                     return html;
                 }),
                 xAxis: this._axX(),
                 yAxis: { ...this._axY(' €'), name: '€' },
                 dataZoom: this._zoom(),
-                series: [
-                    { name: 'VK', type: 'line', symbol: 'none',
-                      data: s.map(d => [d.datum, d.vk]),
-                      lineStyle: { color: '#3B82F6', width: 2.5 },
-                      markLine: { silent: true, symbol: 'none', data: ml.filter(m => m.lineStyle.color === '#3B82F6') } },
-                    { name: 'EK', type: 'line', symbol: 'none',
-                      data: s.map(d => [d.datum, d.ek]),
-                      lineStyle: { color: '#F59E0B', width: 2.5 },
-                      markLine: { silent: true, symbol: 'none', data: ml.filter(m => m.lineStyle.color === '#F59E0B') } },
-                    { name: 'Marge', type: 'line', symbol: 'none',
-                      data: s.map(d => [d.datum, d.marge_abs]),
-                      lineStyle: { color: '#10B981', width: 1.5 },
-                      areaStyle: { color: { type:'linear',x:0,y:0,x2:0,y2:1,
-                          colorStops:[{offset:0,color:'rgba(16,185,129,.2)'},{offset:1,color:'rgba(16,185,129,.02)'}] } } }
-                ]
+                series
             });
         },
 
@@ -2198,6 +2296,106 @@ function dashboard() {
                 yAxis: { ...this._axY(this.compareMode === 'normalized' ? '' : '%'), name: yLabel },
                 dataZoom: this._zoom(),
                 series
+            });
+            this.$nextTick(() => this.initCorrelationMatrix());
+        },
+
+        // ── CORRELATION MATRIX ───────────────────────────
+        initCorrelationMatrix() {
+            const el = document.getElementById('chart-correlation');
+            if (!el || this.compareArtikel.length < 2) return;
+
+            // Pearson correlation helper
+            const pearson = (xs, ys) => {
+                const n = xs.length;
+                if (n < 2) return 0;
+                const mx = xs.reduce((a, b) => a + b, 0) / n;
+                const my = ys.reduce((a, b) => a + b, 0) / n;
+                let num = 0, sx = 0, sy = 0;
+                for (let i = 0; i < n; i++) {
+                    const dx = xs[i] - mx, dy = ys[i] - my;
+                    num += dx * dy; sx += dx * dx; sy += dy * dy;
+                }
+                const denom = Math.sqrt(sx * sy);
+                return denom === 0 ? 0 : num / denom;
+            };
+
+            const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#A855F7', '#EF4444'];
+            const arts = this.compareArtikel;
+            const n = arts.length;
+
+            // Build weekly-sampled marge_pct per article, keyed by datum
+            const maps = arts.map(a => {
+                const m = {};
+                sampleEvery(this.getFiltered(a.id), 7).forEach(d => { m[d.datum] = d.marge_pct; });
+                return m;
+            });
+
+            // Collect common dates for each pair and compute Pearson
+            const matrixData = []; // [col, row, value] for ECharts
+            const corr = Array.from({ length: n }, () => new Array(n).fill(0));
+
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (i === j) { corr[i][j] = 1; continue; }
+                    const dates = Object.keys(maps[i]).filter(d => d in maps[j]);
+                    const xs = dates.map(d => maps[i][d]);
+                    const ys = dates.map(d => maps[j][d]);
+                    corr[i][j] = Math.round(pearson(xs, ys) * 1000) / 1000;
+                }
+            }
+
+            for (let row = 0; row < n; row++) {
+                for (let col = 0; col < n; col++) {
+                    matrixData.push([col, row, corr[row][col]]);
+                }
+            }
+
+            const labels = arts.map(a => a.name);
+            const shortLabels = arts.map(a => a.id);
+
+            this._chart('chart-correlation', {
+                tooltip: {
+                    formatter: p => {
+                        const r = p.data[1], c = p.data[0];
+                        const v = p.data[2];
+                        if (r === c) return `<b>${labels[r]}</b><br/>Autokorrelation: <b>1.000</b>`;
+                        const strength = Math.abs(v) >= 0.7 ? 'stark' : Math.abs(v) >= 0.4 ? 'moderat' : 'schwach';
+                        const dir = v >= 0 ? 'positiv' : 'negativ';
+                        return `${labels[r]}<br/>${labels[c]}<br/>r = <b>${v.toFixed(3)}</b><br/><span style="color:#94a3b8">${strength} ${dir}</span>`;
+                    }
+                },
+                grid: { top: 20, right: 20, bottom: 60, left: 8 },
+                xAxis: {
+                    type: 'category', data: shortLabels, position: 'bottom',
+                    axisLabel: { color: '#64748b', fontSize: 11, interval: 0 },
+                    axisLine: { show: false }, axisTick: { show: false },
+                    splitLine: { show: false }
+                },
+                yAxis: {
+                    type: 'category', data: shortLabels,
+                    axisLabel: { color: '#64748b', fontSize: 11 },
+                    axisLine: { show: false }, axisTick: { show: false },
+                    splitLine: { show: false }
+                },
+                visualMap: {
+                    min: -1, max: 1,
+                    calculable: false, show: false,
+                    inRange: { color: ['#EF4444', '#7F1D1D', '#1e293b', '#064E3B', '#10B981'] }
+                },
+                series: [{
+                    type: 'heatmap',
+                    data: matrixData,
+                    label: {
+                        show: true,
+                        formatter: p => p.data[2].toFixed(2),
+                        fontSize: n <= 3 ? 14 : n <= 4 ? 12 : 11,
+                        color: '#e2e8f0',
+                        fontWeight: 'bold'
+                    },
+                    itemStyle: { borderColor: '#0f172a', borderWidth: 2, borderRadius: 4 },
+                    emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(255,255,255,0.15)' } }
+                }]
             });
         },
 
