@@ -123,7 +123,13 @@
             <div class="px-4 py-3 border-b border-slate-800">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-xs text-slate-400">Marge-Schwelle</span>
-                    <span class="text-xs font-mono text-slate-300" x-text="marginThreshold + '%'"></span>
+                    <div class="flex items-center gap-1.5">
+                        <template x-if="marginThreshold > 0 && belowThresholdArtikel.length > 0">
+                            <span class="text-xs font-mono text-amber-400 bg-amber-400/10 border border-amber-400/30 px-1.5 py-0.5 rounded leading-none"
+                                  x-text="belowThresholdArtikel.length + ' ⚠'"></span>
+                        </template>
+                        <span class="text-xs font-mono text-slate-300" x-text="marginThreshold + '%'"></span>
+                    </div>
                 </div>
                 <input type="range" x-model.number="marginThreshold" @change="applyFilters()"
                     min="0" max="100" step="5" class="w-full accent-blue-500 h-1.5">
@@ -135,7 +141,7 @@
             <!-- Gleitender Durchschnitt -->
             <div class="px-4 py-3 border-b border-slate-800">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs text-slate-400">Gleit. Durchschnitt</span>
+                    <span class="text-xs text-slate-400">Gleitender Durchschnitt</span>
                     <button @click="showMA = !showMA; applyFilters()"
                         :class="showMA ? 'bg-blue-600' : 'bg-slate-700'"
                         class="relative w-8 h-4 rounded-full transition-colors">
@@ -194,12 +200,18 @@
                         <button @click="showDetail(a)"
                             :class="selectedArtikel && selectedArtikel.id === a.id
                                 ? 'bg-blue-900/40 border-blue-700/60 text-white'
-                                : 'hover:bg-slate-800 border-transparent'"
+                                : (marginThreshold > 0 && a.latest.marge_pct < marginThreshold
+                                    ? 'hover:bg-slate-800 border-amber-700/50 bg-amber-900/10'
+                                    : 'hover:bg-slate-800 border-transparent')"
                             class="w-full flex items-center gap-2 px-2 py-1.5 rounded border text-left transition-colors">
                             <div class="w-1.5 h-1.5 rounded-full shrink-0"
                                 :style="'background:' + getCatColor(a.kategorie)"></div>
                             <div class="flex-1 min-w-0">
-                                <div class="text-xs font-medium truncate leading-tight" x-text="a.name"></div>
+                                <div class="text-xs font-medium truncate leading-tight flex items-center gap-1">
+                                    <span x-show="marginThreshold > 0 && a.latest.marge_pct < marginThreshold"
+                                          class="text-amber-400 leading-none shrink-0">⚠</span>
+                                    <span x-text="a.name"></span>
+                                </div>
                                 <div class="text-xs text-slate-600 leading-tight flex items-center gap-1">
                                     <span x-text="a.id"></span>
                                     <span x-show="a.typ === 'set'"
@@ -267,7 +279,7 @@
                             <span class="text-slate-300 font-mono" x-text="kpiAvgHS.toFixed(1) + '%'"></span>
                         </div>
                         <div class="flex justify-between text-xs">
-                            <span class="text-slate-500">Ø Marge abs.</span>
+                            <span class="text-slate-500">Ø Marge absolut</span>
                             <span class="text-slate-300 font-mono" x-text="kpiAvgAbsMargin.toFixed(0) + ' €'"></span>
                         </div>
                         <div class="flex justify-between text-xs pt-0.5 border-t border-slate-800/60">
@@ -300,13 +312,41 @@
                 </div>
             </div>
 
+            <!-- Alert-Banner -->
+            <template x-if="marginThreshold > 0 && belowThresholdArtikel.length > 0">
+                <div class="rounded-xl border border-amber-700/50 bg-amber-900/15 px-4 py-3 flex items-start gap-3">
+                    <span class="text-amber-400 text-base leading-none mt-0.5 shrink-0">⚠</span>
+                    <div class="flex-1 min-w-0">
+                        <span class="text-sm font-semibold text-amber-300"
+                              x-text="belowThresholdArtikel.length + ' Artikel unter Marge-Schwelle (' + marginThreshold + '%)'"></span>
+                        <div class="mt-1.5 flex flex-wrap gap-1.5">
+                            <template x-for="a in belowThresholdArtikel" :key="a.id">
+                                <button @click="showDetail(a)"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-900/30 border border-amber-700/40 hover:bg-amber-900/50 transition-colors text-left">
+                                    <span class="text-xs text-amber-200 font-medium" x-text="a.name"></span>
+                                    <span class="text-xs font-mono text-red-400" x-text="a.latest.marge_pct.toFixed(1) + '%'"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             <!-- Charts Row -->
             <div class="grid grid-cols-3 gap-4">
                 <!-- Portfolio Trend (2/3) -->
                 <div class="col-span-2 bg-slate-900 rounded-xl border border-slate-800 p-4">
-                    <div class="mb-3">
-                        <h3 class="text-sm font-semibold">Portfolio-Trendchart</h3>
-                        <p class="text-xs text-slate-500">Ø Mark-up aller gefilterten Artikel · DataZoom aktiv</p>
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="text-sm font-semibold">Portfolio-Trendchart</h3>
+                            <p class="text-xs text-slate-500">Ø Mark-up aller gefilterten Artikel · DataZoom aktiv</p>
+                        </div>
+                        <button @click="exportChartPNG('chart-portfolio-trend', 'portfolio-trend')"
+                            title="Als PNG exportieren"
+                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            PNG
+                        </button>
                     </div>
                     <div id="chart-portfolio-trend" class="echart h-56"></div>
                 </div>
@@ -327,6 +367,20 @@
                         <div>
                             <h3 class="text-sm font-semibold">Artikel-Ranking</h3>
                             <p class="text-xs text-slate-500">Alle Artikel sortiert nach gewählter Kenngröße</p>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <button @click="exportRankingCSV()"
+                                title="Als CSV exportieren"
+                                class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                CSV
+                            </button>
+                            <button @click="exportChartPNG('chart-ranking', 'artikel-ranking')"
+                                title="Als PNG exportieren"
+                                class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                PNG
+                            </button>
                         </div>
                     </div>
                     <div id="chart-ranking" class="echart h-96"></div>
@@ -459,13 +513,29 @@
             <!-- Price + Margin Charts -->
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
-                    <h3 class="text-sm font-semibold">Preisentwicklung (€)</h3>
+                    <div class="flex items-start justify-between mb-1">
+                        <h3 class="text-sm font-semibold">Preisentwicklung (€)</h3>
+                        <button @click="exportChartPNG('chart-price-detail', 'preisentwicklung_' + (selectedArtikel?.id || ''))"
+                            title="Als PNG exportieren"
+                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            PNG
+                        </button>
+                    </div>
                     <p class="text-xs text-slate-500 mb-3">EK · VK · Marge absolut | Markierungen = Preisänderungen</p>
                     <div id="chart-price-detail" class="echart h-64"></div>
                 </div>
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
-                    <h3 class="text-sm font-semibold">Margenentwicklung (%)</h3>
-                    <p class="text-xs text-slate-500 mb-3">Mark-up (EK-Basis) · Handelsspanne (VK-Basis) · Gleit. Ø</p>
+                    <div class="flex items-start justify-between mb-1">
+                        <h3 class="text-sm font-semibold">Margenentwicklung (%)</h3>
+                        <button @click="exportChartPNG('chart-margin-detail', 'margenentwicklung_' + (selectedArtikel?.id || ''))"
+                            title="Als PNG exportieren"
+                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            PNG
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Mark-up (EK-Basis) · Handelsspanne (VK-Basis) · Gleitender Ø</p>
                     <div id="chart-margin-detail" class="echart h-64"></div>
                 </div>
             </div>
@@ -495,11 +565,11 @@
                                 <span class="font-mono text-emerald-400" x-text="detailStats.maxMarkup.toFixed(1) + '%'"></span>
                             </div>
                             <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
-                                <span class="text-slate-500">Standardabw.</span>
+                                <span class="text-slate-500">Standardabweichung</span>
                                 <span class="font-mono text-slate-200" x-text="'±' + detailStats.stddev.toFixed(2) + 'pp'"></span>
                             </div>
                             <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
-                                <span class="text-slate-500">Ø Marge abs.</span>
+                                <span class="text-slate-500">Ø Marge absolut</span>
                                 <span class="font-mono text-slate-200" x-text="detailStats.avgAbs.toFixed(2) + ' €'"></span>
                             </div>
                             <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
@@ -517,7 +587,7 @@
                                 <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Verkauf &amp; Lager</span>
                             </div>
                             <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
-                                <span class="text-slate-500">Verkaufte Einh.</span>
+                                <span class="text-slate-500">Verkaufte Einheiten</span>
                                 <span class="font-mono text-slate-200" x-text="detailStats.totalUnits.toLocaleString('de-DE') + ' Stk.'"></span>
                             </div>
                             <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
@@ -540,7 +610,15 @@
 
                 <!-- Preisänderungs-Tabelle -->
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
-                    <h3 class="text-sm font-semibold mb-3">Alle Preisänderungen</h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold">Alle Preisänderungen</h3>
+                        <button @click="exportPriceChangesCSV()"
+                            title="Als CSV exportieren"
+                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            CSV
+                        </button>
+                    </div>
                     <template x-if="selectedArtikel">
                         <div class="space-y-1 overflow-y-auto max-h-44">
                             <template x-for="(p, i) in selectedArtikel.einkaufspreise" :key="'ek'+i">
@@ -1527,11 +1605,45 @@ function dashboard() {
             ARTIKEL.forEach(a => {
                 this._cache[a.id] = generateDailyData(a, '2023-01-01', '2025-12-31');
             });
+            this._loadFilters();
             this.updateDerived();
             this.$nextTick(() => this.initDashboardCharts());
             window.addEventListener('resize', () => {
                 Object.values(this._charts).forEach(c => c && !c.isDisposed() && c.resize());
             });
+        },
+
+        _saveFilters() {
+            try {
+                localStorage.setItem('sw_filters', JSON.stringify({
+                    dateStart:          this.dateStart,
+                    dateEnd:            this.dateEnd,
+                    selectedCategories: this.selectedCategories,
+                    marginThreshold:    this.marginThreshold,
+                    movingAvg:          this.movingAvg,
+                    showMA:             this.showMA,
+                    sortBy:             this.sortBy,
+                    typeFilter:         this.typeFilter,
+                    activeQuickFilter:  this.activeQuickFilter,
+                }));
+            } catch(e) {}
+        },
+
+        _loadFilters() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('sw_filters'));
+                if (!saved) return;
+                if (saved.dateStart)          this.dateStart          = saved.dateStart;
+                if (saved.dateEnd)            this.dateEnd            = saved.dateEnd;
+                if (Array.isArray(saved.selectedCategories) && saved.selectedCategories.length)
+                                              this.selectedCategories = saved.selectedCategories;
+                if (saved.marginThreshold != null) this.marginThreshold = saved.marginThreshold;
+                if (saved.movingAvg)          this.movingAvg          = saved.movingAvg;
+                if (saved.showMA != null)     this.showMA             = saved.showMA;
+                if (saved.sortBy)             this.sortBy             = saved.sortBy;
+                if (saved.typeFilter)         this.typeFilter         = saved.typeFilter;
+                if (saved.activeQuickFilter)  this.activeQuickFilter  = saved.activeQuickFilter;
+            } catch(e) {}
         },
 
         // ── Derived data ─────────────────────────────────
@@ -1598,6 +1710,11 @@ function dashboard() {
             });
             return { total: ek + vk, ek, vk };
         },
+        get belowThresholdArtikel() {
+            if (!this.marginThreshold) return [];
+            return this.rankingData.filter(a => a.latest.marge_pct < this.marginThreshold);
+        },
+
         get kpiAvgStockoutRate() {
             if (!this.rankingData.length) return 0;
             return Math.round(
@@ -1650,6 +1767,7 @@ function dashboard() {
         // ── Filters ──────────────────────────────────────
         applyFilters() {
             this.updateDerived();
+            this._saveFilters();
             this.$nextTick(() => this.navigateTo(this.currentView));
         },
 
@@ -1774,6 +1892,7 @@ function dashboard() {
 
         refreshRankingChart() {
             this.sortRanking();
+            this._saveFilters();
             const data = [...this.rankingData].reverse();
             const getV = a => {
                 if (this.sortBy === 'marge_abs')    return a.latest.marge_abs;
@@ -1800,7 +1919,14 @@ function dashboard() {
                         itemStyle: { color: col(getV(a)), borderRadius: [0,3,3,0] } })),
                     label: { show: true, position: 'right',
                         formatter: p => p.value.toFixed(this.sortBy === 'marge_abs' ? 0 : 1) + unit,
-                        color: '#64748b', fontSize: 10 }
+                        color: '#64748b', fontSize: 10 },
+                    markLine: (this.marginThreshold > 0 && this.sortBy === 'marge_pct') ? {
+                        silent: true, symbol: 'none',
+                        lineStyle: { color: '#F59E0B', type: 'dashed', width: 1.5, opacity: 0.8 },
+                        label: { formatter: `Schwelle ${this.marginThreshold}%`, position: 'end',
+                                 color: '#F59E0B', fontSize: 9, padding: [2, 4] },
+                        data: [{ xAxis: this.marginThreshold }]
+                    } : undefined
                 }]
             });
         },
@@ -1903,7 +2029,7 @@ function dashboard() {
                     const after  = daily.slice(idx + 1, idx + 31);
                     const avgB = before.reduce((s, d) => s + d.marge_pct, 0) / before.length;
                     const avgA = after.reduce((s, d) => s + d.marge_pct, 0) / after.length;
-                    events.push({ label: `${type}-Änd. ${p.gueltig_ab}`, before: avgB, after: avgA, delta: avgA - avgB, type });
+                    events.push({ label: `${type}-Änderung ${p.gueltig_ab}`, before: avgB, after: avgA, delta: avgA - avgB, type });
                 });
             };
             addEvents(this.selectedArtikel.einkaufspreise, 'EK');
@@ -2064,7 +2190,7 @@ function dashboard() {
                 xAxis: { type: 'category', data: binsF.map(b => b.lbl),
                     axisLabel: { color: '#64748b', fontSize: 11 },
                     axisLine: { show: false }, axisTick: { show: false } },
-                yAxis: { type: 'value', name: 'Anz.', nameTextStyle: { color: '#64748b', fontSize: 10 },
+                yAxis: { type: 'value', name: 'Anzahl', nameTextStyle: { color: '#64748b', fontSize: 10 },
                     ...this._axY(''), axisLabel: { color: '#64748b', fontSize: 11, formatter: '{value}' },
                     minInterval: 1 },
                 series: [{
@@ -2171,8 +2297,8 @@ function dashboard() {
             const data = [...this.rankingData].sort((a, b) => b.stats.stddev - a.stats.stddev).reverse();
             this._chart('chart-volatility', {
                 grid: { top: 8, right: 80, bottom: 20, left: 140 },
-                tooltip: this._tip(p => `${p[0].name}<br/>Std.-Abw.: <b>±${p[0].value.toFixed(2)} pp</b>`),
-                xAxis: { type: 'value', ...this._axY(' pp'), name: 'Standardabw. (pp)',
+                tooltip: this._tip(p => `${p[0].name}<br/>Standardabweichung: <b>±${p[0].value.toFixed(2)} pp</b>`),
+                xAxis: { type: 'value', ...this._axY(' pp'), name: 'Standardabweichung (pp)',
                     axisLabel: { color: '#64748b', fontSize: 10, formatter: '±{value}pp' } },
                 yAxis: { type: 'category', data: data.map(a => a.name),
                     axisLabel: { color: '#94a3b8', fontSize: 10.5 },
@@ -2186,6 +2312,59 @@ function dashboard() {
                         formatter: p => `±${p.value.toFixed(2)}pp`, color: '#64748b', fontSize: 10 }
                 }]
             });
+        },
+
+        // ── EXPORT ───────────────────────────────────────
+        exportChartPNG(chartId, filename) {
+            const chart = this._charts[chartId];
+            if (!chart || chart.isDisposed()) return;
+            const url = chart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#0f172a' });
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename + '.png';
+            a.click();
+        },
+
+        exportRankingCSV() {
+            const rows = [['ID', 'Name', 'Kategorie', 'Typ', 'EK (€)', 'VK (€)', 'Mark-up (%)', 'Handelsspanne (%)', 'Marge absolut (€)']];
+            this.rankingData.forEach(a => {
+                rows.push([
+                    a.id, a.name, a.kategorie, a.typ || 'einzel',
+                    a.latest.ek.toFixed(2),
+                    a.latest.vk.toFixed(2),
+                    a.latest.marge_pct.toFixed(2),
+                    a.latest.handelsspanne.toFixed(2),
+                    a.latest.marge_abs.toFixed(2)
+                ]);
+            });
+            this._downloadCSV(rows, 'ranking_' + this.dateStart + '_' + this.dateEnd);
+        },
+
+        exportPriceChangesCSV() {
+            if (!this.selectedArtikel) return;
+            const rows = [['Datum', 'Typ', 'Preis (€)', 'Delta (€)']];
+            const addRows = (pts, type) => {
+                pts.forEach((p, i) => {
+                    rows.push([p.gueltig_ab, type, p.preis.toFixed(2), i === 0 ? '' : (p.preis - pts[i-1].preis).toFixed(2)]);
+                });
+            };
+            addRows(this.selectedArtikel.einkaufspreise, 'EK');
+            addRows(this.selectedArtikel.verkaufspreise, 'VK');
+            const header = rows.shift();
+            rows.sort((a, b) => a[0].localeCompare(b[0]));
+            rows.unshift(header);
+            this._downloadCSV(rows, 'preisaenderungen_' + this.selectedArtikel.id);
+        },
+
+        _downloadCSV(rows, filename) {
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
         }
     };
 }
