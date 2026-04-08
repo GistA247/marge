@@ -305,10 +305,20 @@
 
             <h3>Marge-Schwelle (Slider, 0–100 %)</h3>
             <p>Filtert Artikel heraus, deren aktueller Mark-up unter dem eingestellten Schwellenwert liegt. Die verbleibenden Artikel erscheinen in der Sidebar-Liste, im Ranking-Chart und in den Portfolio-Charts. Nützlich, um sich auf Artikel mit kritischer Marge zu konzentrieren.</p>
+            <p>Zusätzlich zum Filter aktiviert die Schwelle das <strong>Alerting-System</strong>: Artikel <em>unterhalb</em> der Schwelle bleiben im Sortiment sichtbar, werden aber speziell gekennzeichnet:</p>
+            <ul class="list-disc list-inside space-y-1 mt-1">
+                <li>⚠-Icon neben dem Artikel in der Sidebar-Artikelliste</li>
+                <li>Oranger Badge mit Anzahl betroffener Artikel im Sidebar-Header</li>
+                <li>Roter Alert-Banner oben im Dashboard mit Auflistung aller betroffenen Artikel</li>
+                <li>Rote Referenzlinie im Artikel-Ranking-Chart auf der Schwellenwert-Position</li>
+            </ul>
 
-            <div class="callout callout-amber">
+            <div class="callout callout-amber mt-3">
                 <strong>Achtung:</strong> Ein hoher Schwellenwert kann alle Artikel herausfiltern und leere Charts erzeugen. Slider auf 0 zurücksetzen, um alle Artikel wieder anzuzeigen.
             </div>
+
+            <h3>Filter-Persistenz (LocalStorage)</h3>
+            <p>Alle Filtereinstellungen (Zeitraum, Kategorien, Schwelle, MA-Periode, Typ-Filter, Sortierung) werden automatisch im <strong>Browser-LocalStorage</strong> gespeichert. Beim nächsten Öffnen der Seite werden sie wiederhergestellt — kein manuelles Zurücksetzen nötig.</p>
 
             <h3>Gleitender Durchschnitt</h3>
             <p>Schaltet den gleitenden Ø Mark-up im <strong>Margenentwicklungs-Chart</strong> (Artikel-Detail) ein oder aus. Die Periode ist wählbar: <strong>7T / 30T / 90T</strong>. Der Umschalter ist ein Toggle-Button (blau = aktiv).</p>
@@ -356,15 +366,20 @@
                 </div>
             </div>
 
+            <h3>Alert-Banner</h3>
+            <p>Wenn die Marge-Schwelle in der Sidebar auf einen Wert &gt; 0 gesetzt ist und mindestens ein Artikel darunter fällt, erscheint <strong>oben im Dashboard ein roter Banner</strong> mit den Namen aller betroffenen Artikel. Klick auf einen Artikel-Link öffnet direkt die Detailansicht.</p>
+
             <h3>Portfolio-Trendchart</h3>
             <p>Zeitreihe des <strong>Ø Mark-up aller gefilterten Artikel</strong> über den gewählten Zeitraum. Datenpunkt = monatliches Mittel. Die grüne Fläche unter der Linie zeigt die Entwicklung des gesamten Portfolios auf einen Blick.</p>
             <p><strong>DataZoom:</strong> Unterhalb des Charts befindet sich ein Zoom-Schieberegler. Der Bereich kann auch mit dem Mausrad gezoomt und per Drag verschoben werden.</p>
+            <p><strong>PNG-Export:</strong> Der Button oben rechts im Chart-Header exportiert den Chart als PNG-Datei (2× Auflösung, dunkler Hintergrund).</p>
 
             <h3>Ø Mark-up je Kategorie</h3>
             <p>Horizontales Balkendiagramm mit dem aktuellen Durchschnitts-Mark-up pro Kategorie, sortiert absteigend. Farben entsprechen den Kategorie-Farben aus der Sidebar.</p>
 
             <h3>Artikel-Ranking</h3>
-            <p>Alle gefilterten Artikel sortiert nach der in der Sidebar gewählten Kennzahl. Die Balkenlänge entspricht dem Wert, die Farbe gibt die Margenqualität an (grün / amber / rot). Die Sortierung kann jederzeit in der Sidebar umgeschaltet werden.</p>
+            <p>Alle gefilterten Artikel sortiert nach der in der Sidebar gewählten Kennzahl. Die Balkenlänge entspricht dem Wert, die Farbe gibt die Margenqualität an (grün / amber / rot). Die Sortierung kann jederzeit in der Sidebar umgeschaltet werden. Wenn eine Marge-Schwelle gesetzt ist, erscheint eine <strong>rote Referenzlinie</strong> im Chart.</p>
+            <p><strong>Export:</strong> PNG-Button im Chart-Header; CSV-Button im Ranking-Header exportiert alle Artikelwerte als Excel-kompatible Datei (Semikolon-getrennt, UTF-8 BOM).</p>
 
             <h3>Top &amp; Flop 5 (Tabelle rechts)</h3>
             <p>Die fünf besten und fünf schlechtesten Artikel nach aktuell gewählter Sortierung. Jede Zeile enthält einen <strong>Sparkline-Graphen</strong> der letzten 365 Tage — ein Miniaturbild der Margenentwicklung. Klick öffnet die Detailansicht.</p>
@@ -388,7 +403,23 @@
             <p>Nur bei SET-Artikeln sichtbar: Alle Komponenten mit ihrem Anteil am Haupt-EK. Komponenten mit eigener Artikel-ID (Hauptgeräte) sind blau markiert, Zubehör ohne ID grau. Die Statistik bezieht sich immer auf den Gesamtartikelpreis, nicht auf Einzelkomponenten.</p>
 
             <h3>Preisentwicklungs-Chart (links)</h3>
-            <p>Zeitreihe mit drei Linien: <strong class="text-blue-400">VK (blau)</strong>, <strong class="text-amber-400">EK (gelb)</strong>, <strong class="text-emerald-400">Marge absolut (grün)</strong>. Vertikale Markierungslinien zeigen exakt, wann sich EK oder VK geändert haben. Nützlich, um Margenlücken nach EK-Erhöhungen zu erkennen.</p>
+            <p>Zeitreihe mit drei Linien: <strong class="text-blue-400">VK (blau)</strong>, <strong class="text-amber-400">EK (gelb)</strong>, <strong class="text-emerald-400">Marge absolut (grün)</strong>. Vertikale Markierungslinien zeigen exakt, wann sich EK oder VK geändert haben. Nützlich, um Margenlücken nach EK-Erhöhungen zu erkennen. PNG-Export über den Button im Chart-Header.</p>
+
+            <h3>Lineare Prognose (Preisentwicklung)</h3>
+            <p>Der <strong>„Prognose"-Button</strong> im Header des Preisentwicklungs-Charts aktiviert eine lineare Extrapolation für VK und EK. Sobald aktiv, erscheint ein Dropdown zur Auswahl der Regressionsbasis (<strong>30T / 60T / 90T</strong>).</p>
+            <div class="grid grid-cols-2 gap-3 mt-2">
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-blue-400 mb-1">Gestrichelte Linien</div>
+                    <p class="mb-0 text-xs">Fortschreibung von VK (blau gestrichelt) und EK (gelb gestrichelt) für 30 Tage über das Dateiende hinaus — berechnet per Kleinste-Quadrate-Regression.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold mb-1" style="color:#a78bfa">Konfidenzband (90 %)</div>
+                    <p class="mb-0 text-xs">Halbtransparente Fläche um jede Prognoselinie: ±1,645 × RMSE der Residuen. Breites Band = hohe Unsicherheit.</p>
+                </div>
+            </div>
+            <div class="callout callout-amber mt-3">
+                <strong>Basis wählen:</strong> Kurze Basis (30T) reagiert stark auf aktuelle Trends; lange Basis (90T) gibt den langfristigen Trend. Bei volatilen Artikeln ist das Konfidenzband sehr breit — die Prognose sollte dann als grober Anhaltspunkt, nicht als Vorhersage gelesen werden.
+            </div>
 
             <h3>Margenentwicklungs-Chart (rechts)</h3>
             <p>Zeitreihe in Prozent: <strong class="text-blue-400">Mark-up % (blau, durchgezogen)</strong>, <strong style="color:#A855F7">Handelsspanne % (lila, gestrichelt)</strong> und optional der <strong class="text-emerald-400">gleitende Ø (grün, gepunktet)</strong>. Der MA-Zeitraum (7/30/90 T.) wird in der Sidebar gesteuert.</p>
@@ -413,7 +444,7 @@
             </div>
 
             <h3>Preisänderungs-Tabelle</h3>
-            <p>Chronologische Liste aller historischen EK- und VK-Stufen mit Datum, Preis und Delta zur vorherigen Stufe (Δ in €). Ermöglicht einen schnellen Überblick über die Preishistorie des Artikels.</p>
+            <p>Chronologische Liste aller historischen EK- und VK-Stufen mit Datum, Preis und Delta zur vorherigen Stufe (Δ in €). Ermöglicht einen schnellen Überblick über die Preishistorie des Artikels. <strong>CSV-Export</strong> über den Button im Tabellen-Header (Excel-kompatibel).</p>
 
             <h3>Ereignis-Analyse</h3>
             <p>Für jede Preisänderung im Zeitraum: Gegenüberstellung des <strong>Ø Mark-up 30 Tage vor</strong> vs. <strong>30 Tage nach</strong> der Änderung. Grüne Balken zeigen Verbesserung, rote Verschlechterung. Besonders aufschlussreich bei EK-Erhöhungen: Hat der Händler den VK rechtzeitig angepasst?</p>
@@ -451,6 +482,30 @@
 
             <div class="callout callout-blue mt-4">
                 <strong>Tipp:</strong> Der Vergleichsmodus wird durch die Zeitraum-Filter der Sidebar beeinflusst. Engerer Zeitraum = mehr Detail; 3J = längster Überblick.
+            </div>
+
+            <h3>Korrelationsmatrix</h3>
+            <p>Sobald <strong>mindestens 2 Artikel</strong> ausgewählt sind, erscheint unterhalb des Vergleichs-Charts automatisch eine Heatmap mit den <strong>paarweisen Pearson-Korrelationen</strong> der Margenverläufe.</p>
+            <div class="grid grid-cols-3 gap-3 mt-2">
+                <div class="metric-box text-center">
+                    <div class="text-lg font-bold text-emerald-400">+1</div>
+                    <div class="text-xs text-slate-500 mt-1">Stark positiv</div>
+                    <div class="text-xs text-slate-600">Margen bewegen sich gleichläufig</div>
+                </div>
+                <div class="metric-box text-center">
+                    <div class="text-lg font-bold text-slate-400">0</div>
+                    <div class="text-xs text-slate-500 mt-1">Kein Zusammenhang</div>
+                    <div class="text-xs text-slate-600">Unabhängige Entwicklung</div>
+                </div>
+                <div class="metric-box text-center">
+                    <div class="text-lg font-bold text-red-400">−1</div>
+                    <div class="text-xs text-slate-500 mt-1">Stark negativ</div>
+                    <div class="text-xs text-slate-600">Margen bewegen sich gegenläufig</div>
+                </div>
+            </div>
+            <p class="mt-3">Die Farbskala reicht von <strong class="text-emerald-400">grün (+1)</strong> über grau (0) bis <strong class="text-red-400">rot (−1)</strong>. Jede Zelle zeigt den r-Wert auf zwei Dezimalstellen. Der Tooltip liefert Artikelnamen, exakten r-Wert und eine Einschätzung (stark / moderat / schwach positiv/negativ).</p>
+            <div class="callout callout-green mt-3">
+                <strong>Anwendungsfall:</strong> Gegenläufig korrelierende Artikel (r nahe −1) können das Portfolio-Risiko diversifizieren — Margenrückgänge beim einen werden durch Anstiege beim anderen abgefedert.
             </div>
         </section>
 
@@ -610,10 +665,12 @@
             <h3>Effektiver Workflow</h3>
             <ol class="list-decimal list-inside space-y-2 mt-1">
                 <li>Starten Sie im <strong>Dashboard</strong> mit dem 1J-Filter, um die aktuelle Situation zu sehen.</li>
+                <li>Setzen Sie die <strong>Marge-Schwelle</strong> auf 30 %, um sofort alle kritischen Artikel im Alert-Banner zu sehen.</li>
                 <li>Schauen Sie in die <strong>Top &amp; Flop 5</strong>: Welche Artikel sind überraschend weit oben oder unten?</li>
                 <li>Klicken Sie in der Flop-5-Liste auf Artikel mit kritischer Marge → <strong>Detail-View</strong> zeigt, wann und warum die Marge sank.</li>
                 <li>Nutzen Sie die <strong>Ereignis-Analyse</strong>, um zu sehen, ob VK-Anpassungen nach EK-Erhöhungen rechtzeitig und ausreichend waren.</li>
-                <li>Wechseln Sie zum <strong>Vergleich (Δ Portfolio-Ø Mode)</strong>, um zu sehen, welche Artikel dauerhaft unter dem Durchschnitt liegen.</li>
+                <li>Aktivieren Sie im Detail-View den <strong>„Prognose"-Button</strong>: Deutet die Trendlinie auf weiteren Margendruck hin? Ist das Konfidenzband schmal genug, um der Prognose zu vertrauen?</li>
+                <li>Wechseln Sie zum <strong>Vergleich</strong> und wählen Sie 3–5 Artikel aus. Die <strong>Korrelationsmatrix</strong> zeigt, ob sich die Artikel gleichläufig oder gegenläufig entwickeln.</li>
                 <li>Im <strong>Portfolio-View, Heatmap</strong>: Saisonale Artikel sind an regelmäßigen Farbwechseln in bestimmten Spalten erkennbar.</li>
             </ol>
 
@@ -640,15 +697,20 @@
                 <div class="callout callout-amber">
                     <strong>Lagerausfälle im Kontext:</strong> Verkaufszahlen-Chart aufrufen und gleichzeitig Margenentwicklung beobachten — Lagerausfallperioden können vorübergehend die Durchschnittsmargen verzerren, wenn nur hochmargige Artikel betroffen sind.
                 </div>
+                <div class="callout callout-green">
+                    <strong>Prognose-Tipp:</strong> Basis 30T eignet sich für Artikel mit jüngsten Preisänderungen (aktueller Trend); Basis 90T glättet kurzfristige Schwankungen und zeigt den strukturellen Verlauf.
+                </div>
+                <div class="callout callout-blue">
+                    <strong>Korrelations-Tipp:</strong> Einen volatilen Artikel mit einem stabilen (z. B. SW-019 oder SW-020) zusammen im Vergleich öffnen — die Korrelationsmatrix zeigt sofort, ob die Volatilität artikelspezifisch oder marktweit ist.
+                </div>
             </div>
 
-            <h3>Bekannte Einschränkungen (Demo)</h3>
+            <h3>Hinweise &amp; Einschränkungen (Demo)</h3>
             <ul class="list-disc list-inside space-y-1 mt-1 text-slate-500 text-sm">
-                <li>Kein Export (CSV, PNG) — ist für eine spätere Phase geplant.</li>
-                <li>Kein Alerting bei Unterschreiten der Marge-Schwelle.</li>
-                <li>Filter werden nicht im Browser gespeichert (kein LocalStorage).</li>
-                <li>Mobile-Ansicht ist eingeschränkt — optimiert für Desktop-Bildschirme.</li>
-                <li>Verkaufszahlen sind simulierte Demo-Daten, keine echten ERP-Daten.</li>
+                <li>Alle Daten (Preise, Verkaufszahlen, Lagerbestände) sind synthetisch generiert — keine echten ERP-Daten.</li>
+                <li>Die Prognose verwendet lineare Regression; nichtlineare Trends (z. B. saisonale Wellen) werden nicht modelliert.</li>
+                <li>Die Korrelationsmatrix zeigt statistische Zusammenhänge, keine Kausalität.</li>
+                <li>Prognose und Korrelation basieren auf dem gefilterten Zeitraum — sehr kurze Zeiträume (&lt; 30 Tage) liefern wenig aussagekräftige Ergebnisse.</li>
             </ul>
 
         </section>
