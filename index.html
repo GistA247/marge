@@ -288,7 +288,7 @@
         <div x-show="currentView === 'dashboard'" class="p-5 space-y-4">
 
             <!-- KPI Cards -->
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-5 gap-4">
 
                 <!-- Höchste Marge -->
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
@@ -335,6 +335,27 @@
                         </div>
                         <div class="flex justify-between text-xs pt-0.5 border-t border-slate-800/60">
                             <span class="text-slate-500">Lagerausfallquote</span>
+                            <span class="font-mono"
+                                  :class="kpiAvgStockoutRate > 25 ? 'text-red-400' : kpiAvgStockoutRate > 15 ? 'text-amber-400' : 'text-emerald-400'"
+                                  x-text="kpiAvgStockoutRate.toFixed(1) + '%'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entgangener Umsatz (Lagerausfall) -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                    <p class="text-xs text-slate-500 mb-2">Entg. Umsatz (Lager)</p>
+                    <div class="text-2xl font-bold text-red-400 leading-none"
+                         x-text="kpiLostRevenue.amount.toLocaleString('de-DE') + ' €'"></div>
+                    <div class="mt-2 space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500">Anteil am Umsatz</span>
+                            <span class="font-mono"
+                                  :class="kpiLostRevenue.pct > 25 ? 'text-red-400' : kpiLostRevenue.pct > 10 ? 'text-amber-400' : 'text-slate-400'"
+                                  x-text="kpiLostRevenue.pct.toFixed(1) + '%'"></span>
+                        </div>
+                        <div class="flex justify-between text-xs pt-0.5 border-t border-slate-800/60">
+                            <span class="text-slate-500">Ø Ausfallquote</span>
                             <span class="font-mono"
                                   :class="kpiAvgStockoutRate > 25 ? 'text-red-400' : kpiAvgStockoutRate > 15 ? 'text-amber-400' : 'text-emerald-400'"
                                   x-text="kpiAvgStockoutRate.toFixed(1) + '%'"></span>
@@ -392,12 +413,15 @@
                     </div>
                     <div class="space-y-1.5">
                         <template x-for="ins in kpiInsights" :key="ins.text">
-                            <div class="flex items-start gap-2 text-xs">
+                            <div class="flex items-start gap-2 text-xs -mx-2 px-2 rounded transition-colors"
+                                 :class="ins.artikel ? 'cursor-pointer hover:bg-slate-800/60' : ''"
+                                 @click="ins.artikel && showDetail(ins.artikel)">
                                 <span x-show="ins.type === 'warn'" class="text-amber-400 mt-0.5 shrink-0">▼</span>
                                 <span x-show="ins.type === 'good'" class="text-emerald-400 mt-0.5 shrink-0">▲</span>
                                 <span x-show="ins.type === 'info'" class="text-blue-400 mt-0.5 shrink-0">●</span>
                                 <span :class="ins.type === 'warn' ? 'text-amber-200' : ins.type === 'good' ? 'text-emerald-200' : 'text-slate-300'"
                                       x-text="ins.text"></span>
+                                <span x-show="ins.artikel" class="ml-auto shrink-0 text-slate-500 hover:text-slate-300">→</span>
                             </div>
                         </template>
                     </div>
@@ -1640,7 +1664,7 @@ function calcStats(daily) {
              avgHS, avgAbs, trend: slope,
              currentEK: last.ek, currentVK: last.vk,
              currentMarkup: last.marge_pct, currentHS: last.handelsspanne,
-             totalUnits, totalRevenue, totalGrossProfit, stockoutRate, avgDailySales };
+             totalUnits, totalRevenue, totalGrossProfit, stockoutDays, stockoutRate, avgDailySales };
 }
 
 function calcMA(daily, win) {
@@ -1883,6 +1907,20 @@ function dashboard() {
             ) / 10;
         },
 
+        get kpiLostRevenue() {
+            if (!this.rankingData.length) return { amount: 0, pct: 0 };
+            let lost = 0, actual = 0;
+            this.rankingData.forEach(a => {
+                const st = a.stats;
+                if (!st) return;
+                lost   += (st.stockoutDays || 0) * (st.avgDailySales || 0) * (st.currentVK || 0);
+                actual += (st.totalRevenue  || 0);
+            });
+            lost = Math.round(lost);
+            const pct = actual > 0 ? Math.round(lost / actual * 1000) / 10 : 0;
+            return { amount: lost, pct };
+        },
+
         get kpiInsights() {
             if (this.rankingData.length < 2) return [];
             const insights = [];
@@ -1915,6 +1953,22 @@ function dashboard() {
             const sorted = [...this.rankingData].sort((a, b) => (b.stats?.stddev || 0) - (a.stats?.stddev || 0));
             if (sorted[0]?.stats?.stddev > 3) {
                 insights.push({ type: 'info', text: `Höchste Margen-Volatilität: ${sorted[0].name} (σ = ${sorted[0].stats.stddev.toFixed(1)} pp).` });
+            }
+            // Größter Lagerausfall-Schaden (€)
+            let worstStockout = null, worstLoss = 0;
+            this.rankingData.forEach(a => {
+                const st = a.stats;
+                if (!st) return;
+                const loss = (st.stockoutDays || 0) * (st.avgDailySales || 0) * (st.currentVK || 0);
+                if (loss > worstLoss) { worstLoss = loss; worstStockout = a; }
+            });
+            if (worstStockout && worstLoss > 0) {
+                const st = worstStockout.stats;
+                insights.push({
+                    type: 'warn',
+                    text: `Größter Lagerausfall-Schaden: ${worstStockout.name} — ca. ${Math.round(worstLoss).toLocaleString('de-DE')} € entgangener Umsatz (${st.stockoutDays} Ausfalltage, ${st.stockoutRate.toFixed(1)} %).`,
+                    artikel: worstStockout
+                });
             }
             return insights;
         },

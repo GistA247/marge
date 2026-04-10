@@ -100,6 +100,7 @@
         <a href="#szenarien"    class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">10</span>Szenarien</a>
         <a href="#tipps"        class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">11</span>Tipps &amp; Tricks</a>
         <a href="#phase5"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">12</span>Neue Features</a>
+        <a href="#phase8"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">13</span>Phase 8 — Lagerausfall</a>
     </nav>
 
     <!-- ── MAIN CONTENT ───────────────────────────────────── -->
@@ -365,6 +366,10 @@
                     <p class="mb-0">Ungewichteter Durchschnitt des aktuellen Mark-up aller gefilterten Artikel. Darunter: Ø Handelsspanne, Ø Marge absolut und die <strong class="text-amber-400">Lagerausfallquote</strong> (Ø Anteil der Tage ohne Bestand).</p>
                 </div>
                 <div class="metric-box">
+                    <div class="text-xs font-semibold text-red-400 mb-1">Entg. Umsatz (Lager)</div>
+                    <p class="mb-0">Geschätzter entgangener Umsatz in Euro durch Lagerausfälle im gesamten gefilterten Portfolio. Berechnung: Ausfalltage × durchschnittliche Tagesverkaufsmenge × VK je Artikel, summiert. Darunter: prozentualer Anteil am tatsächlich erzielten Umsatz sowie die Ø Ausfallquote.</p>
+                </div>
+                <div class="metric-box">
                     <div class="text-xs font-semibold text-amber-400 mb-1">Preisänderungen (letzte 30 T.)</div>
                     <p class="mb-0">Anzahl aller EK- und VK-Preisänderungen im gesamten Sortiment innerhalb der letzten 30 Tage des gewählten Zeitraums. Aufgeteilt in EK- und VK-Änderungen.</p>
                 </div>
@@ -374,7 +379,7 @@
             <p>Wenn die Marge-Schwelle in der Sidebar auf einen Wert &gt; 0 gesetzt ist und mindestens ein Artikel darunter fällt, erscheint <strong>oben im Dashboard ein roter Banner</strong> mit den Namen aller betroffenen Artikel. Klick auf einen Artikel-Link öffnet direkt die Detailansicht.</p>
 
             <h3>Auto-Insightbox</h3>
-            <p>Unterhalb der KPI-Karten erscheint eine automatisch befüllte Insights-Leiste mit bis zu <strong>vier Hinweisen</strong>, die das System auf Basis der aktuellen Filterdaten berechnet:</p>
+            <p>Unterhalb der KPI-Karten erscheint eine automatisch befüllte Insights-Leiste mit bis zu <strong>fünf Hinweisen</strong>, die das System auf Basis der aktuellen Filterdaten berechnet:</p>
             <div class="grid grid-cols-2 gap-3 mt-2">
                 <div class="metric-box">
                     <div class="text-xs font-semibold text-red-400 mb-1">Stärkste Kompression</div>
@@ -392,9 +397,13 @@
                     <div class="text-xs font-semibold text-purple-400 mb-1">Höchste Volatilität</div>
                     <p class="mb-0 text-xs">Artikel mit der größten Standardabweichung des Mark-up — instabile Preislage, erfordert häufiges Monitoring.</p>
                 </div>
+                <div class="metric-box col-span-2">
+                    <div class="text-xs font-semibold text-red-400 mb-1">Größter Lagerausfall-Schaden ↗</div>
+                    <p class="mb-0 text-xs">Der Artikel mit dem höchsten geschätzten entgangenen Umsatz durch Lagerausfälle: Name, Eurobetrag, Ausfalltage und Quote. Dieser Insight ist <strong>klickbar</strong> — ein Klick öffnet direkt die Detailansicht des betroffenen Artikels.</p>
+                </div>
             </div>
             <div class="callout callout-blue mt-3">
-                <strong>Hinweis:</strong> Die Insightbox aktualisiert sich bei jeder Filter-Änderung sofort. Ist ein Insight nicht anwendbar (z. B. kein Artikel unter 30 %), wird er ausgeblendet.
+                <strong>Hinweis:</strong> Die Insightbox aktualisiert sich bei jeder Filter-Änderung sofort. Ist ein Insight nicht anwendbar (z. B. kein Lagerausfall im Zeitraum), wird er ausgeblendet. Klickbare Insights sind an einem <strong>→</strong>-Pfeil am rechten Rand und dem Zeiger-Cursor erkennbar.
             </div>
 
             <h3>Portfolio-Trendchart</h3>
@@ -583,9 +592,11 @@
                 Die Lagerausfallperioden variieren je nach Artikel (verschiedene Seeds), sodass nicht alle Artikel gleichzeitig ausfallen. Die Perioden sind gleichmäßig über den Gesamtzeitraum verteilt.
             </div>
 
-            <h3>Wo sehe ich die Verkaufszahlen?</h3>
+            <h3>Wo sehe ich die Lagerausfallauswirkungen?</h3>
             <ul class="list-disc list-inside space-y-1.5 mt-2">
-                <li><strong>Dashboard, KPI-Karte 3:</strong> Ø Lagerausfallquote des gesamten gefilterten Portfolios.</li>
+                <li><strong>Dashboard, KPI-Karte 3 (Ø Portfolio Mark-up):</strong> Ø Lagerausfallquote des gesamten gefilterten Portfolios als Prozentwert.</li>
+                <li><strong>Dashboard, KPI-Karte 4 (Entg. Umsatz):</strong> Geschätzter entgangener Umsatz in Euro über das gesamte Portfolio, inkl. Anteil am Gesamtumsatz.</li>
+                <li><strong>Dashboard, Auto-Insightbox:</strong> Insight „Größter Lagerausfall-Schaden" benennt den teuersten Artikel direkt und ist per Klick ansteuerbar.</li>
                 <li><strong>Artikel-Detail, Statistik-Box:</strong> Verkaufte Einheiten, Lagerausfallquote, Umsatz und Rohertrag für den gewählten Zeitraum.</li>
                 <li><strong>Artikel-Detail, Verkaufszahlen-Chart:</strong> Wöchentlich aggregierte Verkaufsmengen als Balkendiagramm mit roten Bereichen für Lagerausfälle.</li>
             </ul>
@@ -796,6 +807,42 @@
                         <p class="mb-0 text-xs mt-0.5">Bis zu vier automatisch berechnete Hinweise: stärkste Kompression, stärkste Verbesserung, Artikel unter 30 %, höchste Volatilität. → <a href="#dashboard">Abschnitt 05</a></p>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ════ 13 PHASE 8 — LAGERAUSFALL-SCHADENSANALYSE ═══ -->
+        <section id="phase8" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">13</span>
+                <h2>Phase 8 — Lagerausfall-Schadensanalyse</h2>
+            </div>
+            <p>Phase 8 macht den <strong>monetären Schaden durch Lagerausfälle</strong> sichtbar — nicht nur als Prozentwert, sondern als konkreten Euro-Betrag. Zwei neue Features ergänzen das Dashboard:</p>
+
+            <div class="space-y-3 mt-3">
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-red-400 text-lg leading-none mt-0.5">€</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">KPI-Karte „Entg. Umsatz (Lager)"</div>
+                        <p class="mb-0 text-xs mt-0.5">Die neue 4. KPI-Karte im Dashboard zeigt den geschätzten entgangenen Umsatz aller gefilterten Artikel in Euro. Darunter: prozentualer Anteil am tatsächlichen Umsatz und die Ø Ausfallquote. → <a href="#dashboard">Abschnitt 05</a></p>
+                    </div>
+                </div>
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-amber-400 text-lg leading-none mt-0.5">▼</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Insight „Größter Lagerausfall-Schaden" mit Drill-Down</div>
+                        <p class="mb-0 text-xs mt-0.5">Die Auto-Insightbox zeigt neu den Artikel mit dem höchsten geschätzten Lagerausfall-Schaden (€, Ausfalltage, Quote). Der Insight ist <strong>klickbar</strong> und öffnet direkt dessen Detailansicht. → <a href="#dashboard">Abschnitt 05</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="mt-5">Berechnungslogik</h3>
+            <p>Der entgangene Umsatz je Artikel wird geschätzt als:</p>
+            <div class="metric-box font-mono text-xs text-slate-300 mt-2">
+                entgangener Umsatz = Ausfalltage × Ø Tagesverkauf (bei Verfügbarkeit) × VK
+            </div>
+            <p class="mt-3">Der <em>Ø Tagesverkauf bei Verfügbarkeit</em> wird aus den Tagen berechnet, an denen der Artikel tatsächlich auf Lager war. Tage ohne Bestand fließen nicht in diesen Durchschnitt ein, sodass der Schätzwert realistisch bleibt.</p>
+            <div class="callout callout-amber mt-3">
+                <strong>Demo-Hinweis:</strong> Da die Verkaufszahlen simuliert sind, ist dieser Wert ein Schätzwert auf Basis des Demo-Modells. In der Live-Version mit echten Verkaufsdaten wird die Aussagekraft entsprechend höher.
             </div>
         </section>
 
