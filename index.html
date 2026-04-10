@@ -19,6 +19,22 @@
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
         .echart { width: 100%; }
+        /* KPI collapse toggle */
+        .kpi-chevron {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .kpi-chevron.is-up { transform: rotate(180deg); }
+        @keyframes kpi-nudge-down {
+            0%, 100% { margin-top: 0; }
+            50%       { margin-top: 4px; }
+        }
+        @keyframes kpi-nudge-up {
+            0%, 100% { margin-top: 0; }
+            50%       { margin-top: -4px; }
+        }
+        .kpi-toggle:hover .kpi-chevron:not(.is-up) { animation: kpi-nudge-down 0.35s ease; }
+        .kpi-toggle:hover .kpi-chevron.is-up       { animation: kpi-nudge-up   0.35s ease; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen flex flex-col font-sans antialiased"
@@ -288,7 +304,27 @@
         <div x-show="currentView === 'dashboard'" class="p-5 space-y-4">
 
             <!-- KPI Cards -->
-            <div class="grid grid-cols-5 gap-4">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">KPI-Übersicht</span>
+                    <button class="kpi-toggle flex items-center gap-1.5 text-slate-500 hover:text-slate-300 transition-colors text-xs"
+                            @click="kpiCollapsed = !kpiCollapsed">
+                        <span x-text="kpiCollapsed ? 'Einblenden' : 'Ausblenden'"></span>
+                        <svg class="kpi-chevron w-3.5 h-3.5" :class="kpiCollapsed ? 'is-up' : ''"
+                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                    </button>
+                </div>
+                <div x-show="!kpiCollapsed"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="grid grid-cols-5 gap-4">
 
                 <!-- Höchste Marge -->
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
@@ -382,7 +418,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
+                </div><!-- end grid -->
+            </div><!-- end kpi wrapper -->
 
             <!-- Alert-Banner -->
             <template x-if="marginThreshold > 0 && belowThresholdArtikel.length > 0">
@@ -1753,6 +1790,7 @@ function dashboard() {
 
         // UI state
         sidebarOpen: false,
+        kpiCollapsed: false,
 
         // Filters
         dateStart: '2023-01-01',
