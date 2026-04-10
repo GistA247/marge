@@ -101,6 +101,7 @@
         <a href="#tipps"        class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">11</span>Tipps &amp; Tricks</a>
         <a href="#phase5"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">12</span>Neue Features</a>
         <a href="#phase8"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">13</span>Phase 8 — Lagerausfall</a>
+        <a href="#phase9"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">14</span>Phase 9 — Kacheln</a>
     </nav>
 
     <!-- ── MAIN CONTENT ───────────────────────────────────── -->
@@ -351,7 +352,11 @@
             </div>
             <p>Die Startansicht des Dashboards fasst das gesamte Portfolio auf einen Blick zusammen.</p>
 
-            <h3>KPI-Karten (vier Kacheln oben)</h3>
+            <div class="callout callout-blue">
+                <strong>Jede Kachel ist einzeln kollabierbar.</strong> Oben rechts in jeder Kachel befindet sich ein Chevron-Button (▾). Ein Klick klappt die Kachel auf ihre Titelzeile zusammen und gibt damit Platz für andere Inhalte frei. Der Zustand jeder Kachel wird im Browser gespeichert und beim nächsten Öffnen wiederhergestellt. Über den globalen „Ausblenden"-Button oberhalb der KPI-Kacheln lassen sich alle fünf KPI-Karten gleichzeitig ein- oder ausblenden.
+            </div>
+
+            <h3>KPI-Karten (fünf Kacheln oben)</h3>
             <div class="space-y-3">
                 <div class="metric-box">
                     <div class="text-xs font-semibold text-emerald-400 mb-1">Höchste Marge</div>
@@ -843,6 +848,51 @@
             <p class="mt-3">Der <em>Ø Tagesverkauf bei Verfügbarkeit</em> wird aus den Tagen berechnet, an denen der Artikel tatsächlich auf Lager war. Tage ohne Bestand fließen nicht in diesen Durchschnitt ein, sodass der Schätzwert realistisch bleibt.</p>
             <div class="callout callout-amber mt-3">
                 <strong>Demo-Hinweis:</strong> Da die Verkaufszahlen simuliert sind, ist dieser Wert ein Schätzwert auf Basis des Demo-Modells. In der Live-Version mit echten Verkaufsdaten wird die Aussagekraft entsprechend höher.
+            </div>
+        </section>
+
+        <!-- ════ 14 PHASE 9 — INDIVIDUELLE KACHEL-KOLLABIERUNG ══ -->
+        <section id="phase9" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">14</span>
+                <h2>Phase 9 — Individuelle Kachel-Kollabierung</h2>
+            </div>
+            <p>Alle Kacheln und Sektionen im Dashboard können jetzt <strong>einzeln kollabiert</strong> werden — sowohl die fünf KPI-Kacheln als auch alle übrigen Inhaltsbereiche.</p>
+
+            <h3>Kollabierbare KPI-Kacheln</h3>
+            <p>Jede der fünf KPI-Kacheln hat oben rechts einen <strong>Chevron-Button (▾)</strong>. Ein Klick klappt die Kachel zusammen: sie schrumpft auf ihre Titelzeile — mit Titel und Hauptkennzahl in einer Zeile, zum Beispiel <em>„Höchste Marge 45,2 %"</em>. Die übrigen Kacheln füllen den freigegeben Platz automatisch auf. Ein erneuter Klick expandiert die Kachel wieder vollständig.</p>
+            <p>Die fünf KPI-Kacheln nutzen ein <strong>Flex-Layout</strong>: Expandierte Kacheln teilen sich den Platz gleichmäßig (<code>flex-1</code>), kollabierte Kacheln nehmen nur so viel Breite ein wie ihr Titeltext benötigt (<code>flex-none</code>).</p>
+
+            <h3>Kollabierbare Dashboard-Sektionen</h3>
+            <p>Auch die weiteren Bereiche des Dashboards lassen sich einzeln einklappen:</p>
+            <div class="space-y-2 mt-2">
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-blue-400 mb-1">Automatische Insights</div>
+                    <p class="mb-0 text-xs">Chevron-Button neben dem Titel „Automatische Insights". Klappt die gesamte Insightliste aus.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Portfolio-Trendchart</div>
+                    <p class="mb-0 text-xs">Chevron-Button neben dem PNG-Export-Button. Blendet das Chart-Canvas aus — der Header mit Titel und Export-Button bleibt sichtbar.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Ø Mark-up je Kategorie</div>
+                    <p class="mb-0 text-xs">Chevron-Button oben rechts in der Kachel. Blendet das Kategorien-Balkendiagramm aus.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Artikel-Ranking</div>
+                    <p class="mb-0 text-xs">Chevron-Button neben den Export-Buttons (CSV / PNG). Blendet das Ranking-Chart aus.</p>
+                </div>
+                <div class="metric-box">
+                    <div class="text-xs font-semibold text-slate-300 mb-1">Top &amp; Flop 5</div>
+                    <p class="mb-0 text-xs">Chevron-Button oben rechts. Blendet die Top-5- und Flop-5-Liste aus.</p>
+                </div>
+            </div>
+
+            <h3 class="mt-5">Persistenz</h3>
+            <p>Der Kollabier-Zustand jeder einzelnen Kachel wird im <strong>LocalStorage des Browsers</strong> gespeichert. Nach einem Reload oder beim nächsten Öffnen des Dashboards ist jede Kachel exakt in dem Zustand, in dem sie zuletzt war.</p>
+
+            <div class="callout callout-blue mt-4">
+                <strong>Tipp:</strong> Der globale „Ausblenden"-Button über den KPI-Kacheln kollabiert weiterhin alle fünf KPI-Kacheln auf einmal — unabhängig von den individuellen Kachel-Toggles.
             </div>
         </section>
 
