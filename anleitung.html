@@ -102,6 +102,7 @@
         <a href="#phase5"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">12</span>Neue Features</a>
         <a href="#phase8"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">13</span>Phase 8 — Lagerausfall</a>
         <a href="#phase9"       class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">14</span>Phase 9 — Kacheln</a>
+        <a href="#phase10"      class="nav-link border-l-2 border-transparent flex items-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"><span class="w-4 text-slate-600 font-mono text-center">15</span>Phase 10 — Hilfe-Bubbles</a>
     </nav>
 
     <!-- ── MAIN CONTENT ───────────────────────────────────── -->
@@ -893,6 +894,39 @@
 
             <div class="callout callout-blue mt-4">
                 <strong>Tipp:</strong> Der globale „Ausblenden"-Button über den KPI-Kacheln kollabiert weiterhin alle fünf KPI-Kacheln auf einmal — unabhängig von den individuellen Kachel-Toggles.
+            </div>
+        </section>
+
+        <!-- ════ 15 PHASE 10 — HILFE-BUBBLES ════════════════════ -->
+        <section id="phase10" class="section-anchor">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-slate-600 bg-slate-800 rounded px-2 py-0.5">15</span>
+                <h2>Phase 10 — Hilfe-Bubbles</h2>
+            </div>
+            <p>Phase 10 ergänzt das Dashboard um kontextbezogene <strong>Erklärungstexte</strong>, die direkt an den jeweiligen Kennzahlen erscheinen — ohne eine separate Hilfeseite aufrufen zu müssen.</p>
+
+            <h3>Wie es funktioniert</h3>
+            <p>Neben jeder KPI-Kachel und in jedem Chartbereich befindet sich ein kleines <strong>ⓘ-Symbol</strong>. Wenn die Hilfe-Bubbles aktiviert sind, erscheint beim Hovern über dieses Symbol ein kurzer Erklärungstext direkt am Symbol.</p>
+
+            <div class="space-y-3 mt-3">
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-blue-400 text-lg leading-none mt-0.5">ⓘ</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Aktivierung über die Sidebar</div>
+                        <p class="mb-0 text-xs mt-0.5">In der linken Sidebar gibt es ganz oben den Schalter <strong>„Hilfe-Bubbles"</strong>. Ein Klick aktiviert oder deaktiviert alle Tooltips auf einmal. Der Zustand wird im LocalStorage gespeichert und bleibt beim nächsten Öffnen erhalten.</p>
+                    </div>
+                </div>
+                <div class="metric-box flex gap-3 items-start">
+                    <div class="text-slate-400 text-lg leading-none mt-0.5">💬</div>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-200">Wo Bubbles erscheinen</div>
+                        <p class="mb-0 text-xs mt-0.5">An allen fünf KPI-Kacheln sowie an den Chart-Titeln in der Detailansicht, dem Vergleich und der Portfolio-Analyse. Jede Bubble erklärt die angezeigte Kennzahl, deren Berechnung und worauf du achten solltest.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout callout-blue mt-4">
+                <strong>Tipp:</strong> Die Hilfe-Bubbles sind besonders nützlich beim ersten Kennenlernen des Dashboards oder beim Vorstellen gegenüber Kollegen. Im produktiven Alltag kannst du sie ausschalten, um mehr Übersicht zu behalten.
             </div>
         </section>
 

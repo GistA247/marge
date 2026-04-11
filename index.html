@@ -35,9 +35,33 @@
         }
         .kpi-toggle:hover .kpi-chevron:not(.is-up) { animation: kpi-nudge-down 0.35s ease; }
         .kpi-toggle:hover .kpi-chevron.is-up       { animation: kpi-nudge-up   0.35s ease; }
+        /* Hilfe-Bubbles (Phase 10) */
+        .tt { position: relative; display: inline-flex; align-items: center; cursor: default; }
+        .tt-bubble {
+            display: none;
+            position: absolute;
+            z-index: 60;
+            top: calc(100% + 6px);
+            right: 0;
+            width: 220px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #94a3b8;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.55);
+            pointer-events: none;
+            text-align: left;
+            font-weight: 400;
+            white-space: normal;
+        }
+        .tooltips-on .tt:hover .tt-bubble { display: block; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen flex flex-col font-sans antialiased"
+      :class="showTooltips ? 'tooltips-on' : ''"
       x-data="dashboard()" x-init="init()" x-cloak>
 
 <!-- ═══════════════════════════════════════════════
@@ -136,6 +160,19 @@
         </div>
 
         <div class="flex-1 overflow-y-auto">
+
+            <!-- Hilfe-Bubbles -->
+            <div class="px-4 py-2.5 border-b border-slate-800">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400">Hilfe-Bubbles</span>
+                    <button @click="showTooltips = !showTooltips; _saveFilters()"
+                        :class="showTooltips ? 'bg-blue-600' : 'bg-slate-700'"
+                        class="relative w-8 h-4 rounded-full transition-colors">
+                        <span :class="showTooltips ? 'translate-x-4' : 'translate-x-0.5'"
+                            class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform block"></span>
+                    </button>
+                </div>
+            </div>
 
             <!-- Zeitraum -->
             <div class="px-4 py-3 border-b border-slate-800 space-y-1.5">
@@ -334,14 +371,20 @@
                         <p x-show="kpiCards[0]" class="text-xs text-slate-400 whitespace-nowrap">
                             Höchste Marge <span class="text-emerald-400 font-bold" x-text="kpiHighest ? kpiHighest.latest.marge_pct.toFixed(1) + ' %' : '—'"></span>
                         </p>
-                        <button class="kpi-toggle ml-2 flex items-center text-slate-600 hover:text-slate-300 transition-colors shrink-0"
-                                @click="kpiCards[0] = !kpiCards[0]; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="kpiCards[0] ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1 ml-2 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Der Artikel mit dem aktuell höchsten Mark-up im gefilterten Zeitraum. Mark-up = (VK − EK) ÷ EK × 100.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="kpiCards[0] = !kpiCards[0]; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="kpiCards[0] ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!kpiCards[0]"
                          x-transition:enter="transition ease-out duration-150"
@@ -371,14 +414,20 @@
                         <p x-show="kpiCards[1]" class="text-xs text-slate-400 whitespace-nowrap">
                             Niedrigste Marge <span class="text-red-400 font-bold" x-text="kpiLowest ? kpiLowest.latest.marge_pct.toFixed(1) + ' %' : '—'"></span>
                         </p>
-                        <button class="kpi-toggle ml-2 flex items-center text-slate-600 hover:text-slate-300 transition-colors shrink-0"
-                                @click="kpiCards[1] = !kpiCards[1]; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="kpiCards[1] ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1 ml-2 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Der Artikel mit dem aktuell niedrigsten Mark-up — ein Warnsignal, wenn er unter der gesetzten Marge-Schwelle liegt.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="kpiCards[1] = !kpiCards[1]; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="kpiCards[1] ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!kpiCards[1]"
                          x-transition:enter="transition ease-out duration-150"
@@ -408,14 +457,20 @@
                         <p x-show="kpiCards[2]" class="text-xs text-slate-400 whitespace-nowrap">
                             Ø Mark-up <span class="text-blue-400 font-bold" x-text="kpiAvgMarkup.toFixed(1) + ' %'"></span>
                         </p>
-                        <button class="kpi-toggle ml-2 flex items-center text-slate-600 hover:text-slate-300 transition-colors shrink-0"
-                                @click="kpiCards[2] = !kpiCards[2]; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="kpiCards[2] ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1 ml-2 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Durchschnittlicher Mark-up aller gefilterten Artikel am Ende des gewählten Zeitraums. Handelsspanne = (VK − EK) ÷ VK × 100.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="kpiCards[2] = !kpiCards[2]; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="kpiCards[2] ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!kpiCards[2]"
                          x-transition:enter="transition ease-out duration-150"
@@ -452,14 +507,20 @@
                         <p x-show="kpiCards[3]" class="text-xs text-slate-400 whitespace-nowrap">
                             Entg. Umsatz <span class="text-red-400 font-bold" x-text="kpiLostRevenue.amount.toLocaleString('de-DE') + ' €'"></span>
                         </p>
-                        <button class="kpi-toggle ml-2 flex items-center text-slate-600 hover:text-slate-300 transition-colors shrink-0"
-                                @click="kpiCards[3] = !kpiCards[3]; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="kpiCards[3] ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1 ml-2 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Geschätzter Umsatz, der durch Lagerausfälle verloren ging. Berechnung: Ausfalltage × Ø Tagesverkauf × VK — über alle Artikel summiert.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="kpiCards[3] = !kpiCards[3]; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="kpiCards[3] ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!kpiCards[3]"
                          x-transition:enter="transition ease-out duration-150"
@@ -495,14 +556,20 @@
                         <p x-show="kpiCards[4]" class="text-xs text-slate-400 whitespace-nowrap">
                             Preisänd. <span class="text-amber-400 font-bold" x-text="kpiChanges.total"></span>
                         </p>
-                        <button class="kpi-toggle ml-2 flex items-center text-slate-600 hover:text-slate-300 transition-colors shrink-0"
-                                @click="kpiCards[4] = !kpiCards[4]; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="kpiCards[4] ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1 ml-2 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Anzahl der EK- und VK-Änderungen in den letzten 30 Tagen relativ zum Ende des gewählten Zeitraums.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="kpiCards[4] = !kpiCards[4]; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="kpiCards[4] ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!kpiCards[4]"
                          x-transition:enter="transition ease-out duration-150"
@@ -559,14 +626,20 @@
                             <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                             <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Automatische Insights</span>
                         </div>
-                        <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
-                                @click="sectionCollapsed.insights = !sectionCollapsed.insights; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="sectionCollapsed.insights ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Das System erkennt automatisch auffällige Muster: stärkste Marge-Verbesserung, stärkste Kompression, Artikel unter Schwellenwert und höchster Lagerausfall-Schaden. Klick auf einen Insight öffnet den Artikel-Detail.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="sectionCollapsed.insights = !sectionCollapsed.insights; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="sectionCollapsed.insights ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!sectionCollapsed.insights"
                          x-transition:enter="transition ease-out duration-150"
@@ -602,6 +675,10 @@
                             <p class="text-xs text-slate-500">Ø Mark-up aller gefilterten Artikel · DataZoom aktiv</p>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Zeitlicher Verlauf des durchschnittlichen Mark-up aller gefilterten Artikel. DataZoom: Mausrad oder Ziehen unten am Chart zum Zoomen.</span>
+                            </span>
                             <button @click="exportChartPNG('chart-portfolio-trend', 'portfolio-trend')"
                                 title="Als PNG exportieren"
                                 class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
@@ -636,14 +713,20 @@
                             <h3 class="text-sm font-semibold">Ø Mark-up je Kategorie</h3>
                             <p class="text-xs text-slate-500">Aktueller Wert</p>
                         </div>
-                        <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors shrink-0"
-                                @click="sectionCollapsed.kategorie = !sectionCollapsed.kategorie; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="sectionCollapsed.kategorie ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Aktueller Durchschnitts-Mark-up pro Produktkategorie — zeigt auf einen Blick, welche Kategorie am stärksten oder schwächsten aufgestellt ist.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="sectionCollapsed.kategorie = !sectionCollapsed.kategorie; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="sectionCollapsed.kategorie ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!sectionCollapsed.kategorie"
                          x-transition:enter="transition ease-out duration-150"
@@ -667,6 +750,10 @@
                             <p class="text-xs text-slate-500">Alle Artikel sortiert nach gewählter Kenngröße</p>
                         </div>
                         <div class="flex items-center gap-1.5">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Alle gefilterten Artikel sortiert nach der in der Sidebar gewählten Kenngröße (Mark-up %, Handelsspanne % oder Marge absolut). Klick auf einen Balken öffnet den Artikel-Detail.</span>
+                            </span>
                             <button @click="exportRankingCSV()"
                                 title="Als CSV exportieren"
                                 class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
@@ -704,14 +791,20 @@
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 overflow-hidden">
                     <div class="flex items-center justify-between" :class="sectionCollapsed.topflop ? '' : 'mb-3'">
                         <h3 class="text-sm font-semibold">Top &amp; Flop 5</h3>
-                        <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
-                                @click="sectionCollapsed.topflop = !sectionCollapsed.topflop; _saveFilters()">
-                            <svg class="kpi-chevron w-3 h-3" :class="sectionCollapsed.topflop ? 'is-up' : ''"
-                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Die fünf margenstarken und fünf margenschwachen Artikel mit Sparkline-Verlauf. Klick auf einen Eintrag öffnet den Artikel-Detail.</span>
+                            </span>
+                            <button class="kpi-toggle flex items-center text-slate-600 hover:text-slate-300 transition-colors"
+                                    @click="sectionCollapsed.topflop = !sectionCollapsed.topflop; _saveFilters()">
+                                <svg class="kpi-chevron w-3 h-3" :class="sectionCollapsed.topflop ? 'is-up' : ''"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="!sectionCollapsed.topflop"
                          x-transition:enter="transition ease-out duration-150"
@@ -829,6 +922,10 @@
                         <h3 class="text-sm font-semibold">Zusammensetzung</h3>
                         <span class="text-xs text-slate-500 ml-1"
                             x-text="selectedArtikel.komponenten.length + ' Komponenten · Statistik bezieht sich auf den Gesamtartikel'"></span>
+                        <span class="tt ml-auto">
+                            <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span class="tt-bubble">Auflistung aller Komponenten dieses Set-Artikels. Die Statistiken beziehen sich immer auf den Gesamtartikel, nicht auf einzelne Komponenten.</span>
+                        </span>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <template x-for="k in selectedArtikel.komponenten" :key="k.name">
@@ -850,6 +947,10 @@
                     <div class="flex items-start justify-between mb-1">
                         <h3 class="text-sm font-semibold">Preisentwicklung (€)</h3>
                         <div class="flex items-center gap-1.5">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">EK- und VK-Verlauf in € über den gewählten Zeitraum. Senkrechte Markierungen = Preisänderungen. Optional: lineare Prognose (30 Tage vorwärts) und Rohertrag-Balken zuschaltbar.</span>
+                            </span>
                             <template x-if="showForecast">
                                 <select x-model.number="forecastBasis" @change="$nextTick(() => initDetailCharts())"
                                     class="bg-slate-800 border border-slate-700 text-slate-400 text-xs rounded px-1.5 py-0.5 focus:outline-none cursor-pointer">
@@ -886,12 +987,18 @@
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                     <div class="flex items-start justify-between mb-1">
                         <h3 class="text-sm font-semibold">Margenentwicklung (%)</h3>
-                        <button @click="exportChartPNG('chart-margin-detail', 'margenentwicklung_' + (selectedArtikel?.id || ''))"
-                            title="Als PNG exportieren"
-                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
-                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            PNG
-                        </button>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Mark-up % und Handelsspanne % im Zeitverlauf. Der gleitende Durchschnitt (7/30/90 Tage) glättet kurzfristige Schwankungen — einstellbar in der Sidebar.</span>
+                            </span>
+                            <button @click="exportChartPNG('chart-margin-detail', 'margenentwicklung_' + (selectedArtikel?.id || ''))"
+                                title="Als PNG exportieren"
+                                class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                PNG
+                            </button>
+                        </div>
                     </div>
                     <p class="text-xs text-slate-500 mb-3">Mark-up (EK-Basis) · Handelsspanne (VK-Basis) · Gleitender Ø</p>
                     <div id="chart-margin-detail" class="echart h-64"></div>
@@ -903,7 +1010,13 @@
 
                 <!-- Statistik -->
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
-                    <h3 class="text-sm font-semibold mb-3">Statistik (gewählter Zeitraum)</h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold">Statistik (gewählter Zeitraum)</h3>
+                        <span class="tt">
+                            <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span class="tt-bubble">Kennzahlen des Artikels im gewählten Zeitraum: Durchschnitt, Min/Max, Standardabweichung, Trend sowie Umsatz- und Lager-Kennzahlen.</span>
+                        </span>
+                    </div>
                     <template x-if="detailStats">
                         <div class="grid grid-cols-2 gap-x-6 gap-y-1.5">
                             <div class="flex justify-between text-xs py-0.5 border-b border-slate-800">
@@ -970,12 +1083,18 @@
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-sm font-semibold">Alle Preisänderungen</h3>
-                        <button @click="exportPriceChangesCSV()"
-                            title="Als CSV exportieren"
-                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
-                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            CSV
-                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Chronologische Liste aller EK- und VK-Änderungen mit Datum und absolutem Delta. Als CSV exportierbar.</span>
+                            </span>
+                            <button @click="exportPriceChangesCSV()"
+                                title="Als CSV exportieren"
+                                class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                CSV
+                            </button>
+                        </div>
                     </div>
                     <template x-if="selectedArtikel">
                         <div class="space-y-1 overflow-y-auto max-h-44">
@@ -1014,14 +1133,26 @@
 
             <!-- Ereignis-Analyse -->
             <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold mb-1">Ereignis-Analyse</h3>
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-sm font-semibold">Ereignis-Analyse</h3>
+                    <span class="tt">
+                        <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span class="tt-bubble">Vergleicht den Ø Mark-up 30 Tage vor und 30 Tage nach jeder Preisänderung — zeigt, ob eine Änderung die Marge verbessert oder verschlechtert hat.</span>
+                    </span>
+                </div>
                 <p class="text-xs text-slate-500 mb-3">Ø Mark-up 30 Tage vor vs. 30 Tage nach jeder Preisänderung</p>
                 <div id="chart-event-impact" class="echart h-44"></div>
             </div>
 
             <!-- Verkaufszahlen & Lagerbestand -->
             <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold mb-1">Verkaufszahlen &amp; Lagerbestand</h3>
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-sm font-semibold">Verkaufszahlen &amp; Lagerbestand</h3>
+                    <span class="tt">
+                        <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span class="tt-bubble">Wöchentliche Verkaufsmenge in Stück. Rote Balken-Bereiche = Tage ohne Lagerbestand (Lagerausfall).</span>
+                    </span>
+                </div>
                 <p class="text-xs text-slate-500 mb-3">Wöchentliche Verkaufsmengen (Stk.) · Rote Bereiche = kein Lagerbestand</p>
                 <div id="chart-sales" class="echart h-52"></div>
             </div>
@@ -1049,10 +1180,16 @@
 
             <!-- Artikel-Auswahl -->
             <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold mb-3">
-                    Artikel auswählen
-                    <span class="text-slate-500 font-normal ml-1" x-text="'(' + compareArtikel.length + '/5 gewählt)'"></span>
-                </h3>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold">
+                        Artikel auswählen
+                        <span class="text-slate-500 font-normal ml-1" x-text="'(' + compareArtikel.length + '/5 gewählt)'"></span>
+                    </h3>
+                    <span class="tt">
+                        <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span class="tt-bubble">Bis zu 5 Artikel gleichzeitig vergleichen. Klick auf einen Artikel fügt ihn hinzu oder entfernt ihn aus dem Vergleich.</span>
+                    </span>
+                </div>
                 <div class="flex flex-wrap gap-1.5">
                     <template x-for="a in ARTIKEL" :key="a.id">
                         <button @click="toggleCompare(a)"
@@ -1072,6 +1209,12 @@
 
             <!-- Vergleichs-Chart -->
             <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <div class="flex items-center justify-end mb-1.5">
+                    <span class="tt">
+                        <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span class="tt-bubble">Drei Modi wählbar: Absolut (Mark-up % der Artikel), Normalisiert (alle Artikel starten bei Index 100, Entwicklung vergleichbar), Δ Portfolio-Ø (Abweichung vom Gesamtdurchschnitt).</span>
+                    </span>
+                </div>
                 <div id="chart-comparison" class="echart h-96"
                     x-text="compareArtikel.length === 0 ? 'Mindestens einen Artikel auswählen ...' : ''"></div>
             </div>
@@ -1084,6 +1227,10 @@
                         <p class="text-xs text-slate-500 mt-0.5">Pearson-Korrelation der Margenverläufe zwischen gewählten Artikeln</p>
                     </div>
                     <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                        <span class="tt">
+                            <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span class="tt-bubble">Pearson-Korrelation der Margenverläufe: +1 = Artikel entwickeln sich gleichläufig, 0 = kein Zusammenhang, −1 = gegenläufig. Erscheint ab 2 gewählten Artikeln.</span>
+                        </span>
                         <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:#10B981"></span>+1 stark positiv</span>
                         <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:#475569"></span>0 kein Zsh.</span>
                         <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm inline-block" style="background:#EF4444"></span>−1 stark negativ</span>
@@ -1108,12 +1255,18 @@
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                     <div class="flex items-start justify-between mb-1">
                         <h3 class="text-sm font-semibold">Margenverteilung (aktuell)</h3>
-                        <button @click="exportChartPNG('chart-histogram', 'margenverteilung')"
-                            title="Als PNG exportieren"
-                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
-                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            PNG
-                        </button>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Histogramm der aktuellen Mark-up-Werte aller gefilterten Artikel — zeigt wie das Portfolio über Margenzonen verteilt ist.</span>
+                            </span>
+                            <button @click="exportChartPNG('chart-histogram', 'margenverteilung')"
+                                title="Als PNG exportieren"
+                                class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                PNG
+                            </button>
+                        </div>
                     </div>
                     <p class="text-xs text-slate-500 mb-3">Histogramm Mark-up % aller Artikel</p>
                     <div id="chart-histogram" class="echart h-52"></div>
@@ -1121,12 +1274,18 @@
                 <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                     <div class="flex items-start justify-between mb-1">
                         <h3 class="text-sm font-semibold">Kategorien-Vergleich</h3>
-                        <button @click="exportChartPNG('chart-catbars', 'kategorien-vergleich')"
-                            title="Als PNG exportieren"
-                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
-                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            PNG
-                        </button>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="tt">
+                                <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span class="tt-bubble">Ø Mark-up und Ø Handelsspanne je Produktkategorie im direkten Vergleich.</span>
+                            </span>
+                            <button @click="exportChartPNG('chart-catbars', 'kategorien-vergleich')"
+                                title="Als PNG exportieren"
+                                class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                PNG
+                            </button>
+                        </div>
                     </div>
                     <p class="text-xs text-slate-500 mb-3">Ø Mark-up und Ø Handelsspanne je Kategorie</p>
                     <div id="chart-catbars" class="echart h-52"></div>
@@ -1137,12 +1296,18 @@
             <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                 <div class="flex items-start justify-between mb-1">
                     <h3 class="text-sm font-semibold">Monats-Heatmap: Ø Mark-up</h3>
-                    <button @click="exportChartPNG('chart-heatmap', 'monats-heatmap')"
-                        title="Als PNG exportieren"
-                        class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        PNG
-                    </button>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="tt">
+                            <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span class="tt-bubble">Ø Mark-up pro Artikel und Monat — dunkle Felder = niedrige Marge, helle Felder = hohe Marge. Saisonale Muster und Ausreißer auf einen Blick.</span>
+                        </span>
+                        <button @click="exportChartPNG('chart-heatmap', 'monats-heatmap')"
+                            title="Als PNG exportieren"
+                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            PNG
+                        </button>
+                    </div>
                 </div>
                 <p class="text-xs text-slate-500 mb-3">Artikel × Monat — saisonale Muster und Margenschwankungen erkennbar</p>
                 <div id="chart-heatmap" class="echart h-80"></div>
@@ -1152,12 +1317,18 @@
             <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
                 <div class="flex items-start justify-between mb-1">
                     <h3 class="text-sm font-semibold">Volatilitäts-Ranking</h3>
-                    <button @click="exportChartPNG('chart-volatility', 'volatilitaets-ranking')"
-                        title="Als PNG exportieren"
-                        class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1 shrink-0">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        PNG
-                    </button>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="tt">
+                            <svg class="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span class="tt-bubble">Standardabweichung des Mark-up je Artikel. Grün = stabile Marge, Rot = starke Schwankungen — Hinweis auf Preisdruck oder inkonsistente Preispolitik.</span>
+                        </span>
+                        <button @click="exportChartPNG('chart-volatility', 'volatilitaets-ranking')"
+                            title="Als PNG exportieren"
+                            class="text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-500 rounded px-2 py-0.5 transition-colors flex items-center gap-1">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            PNG
+                        </button>
+                    </div>
                 </div>
                 <p class="text-xs text-slate-500 mb-3">Standardabweichung des Mark-up — grün = stabil, rot = volatil</p>
                 <div id="chart-volatility" class="echart h-72"></div>
@@ -1186,7 +1357,8 @@ const ARTIKEL = [
             { gueltig_ab: '2023-01-01', preis: 349.00 },
             { gueltig_ab: '2023-09-01', preis: 369.00 },
             { gueltig_ab: '2024-03-01', preis: 379.00 },
-            { gueltig_ab: '2025-01-01', preis: 399.00 }
+            { gueltig_ab: '2025-01-01', preis: 399.00 },
+            { gueltig_ab: '2025-12-01', preis: 419.00 }  // Jahresendanpassung +5 %
         ]
     },
     {
@@ -1239,7 +1411,8 @@ const ARTIKEL = [
         id: 'SW-005', name: 'HeavyDuty 250 MAG', kategorie: 'MIG/MAG', leistung_w: 7000,
         szenario: null,
         einkaufspreise: [
-            { gueltig_ab: '2023-01-01', preis: 380.00 }
+            { gueltig_ab: '2023-01-01', preis: 380.00 },
+            { gueltig_ab: '2025-12-01', preis: 401.00 }  // Lieferantenerhöhung +5.5 %
         ],
         verkaufspreise: [
             { gueltig_ab: '2023-01-01', preis: 649.00 },
@@ -1286,7 +1459,8 @@ const ARTIKEL = [
         verkaufspreise: [
             { gueltig_ab: '2023-01-01', preis: 499.00 },
             { gueltig_ab: '2024-01-01', preis: 519.00 },
-            { gueltig_ab: '2025-01-01', preis: 549.00 }
+            { gueltig_ab: '2025-01-01', preis: 549.00 },
+            { gueltig_ab: '2025-12-15', preis: 569.00 }  // Preiskorrektur nach EK-Stieg +3.6 %
         ]
     },
     {
@@ -1346,7 +1520,8 @@ const ARTIKEL = [
         szenario: null,
         einkaufspreise: [
             { gueltig_ab: '2023-01-01', preis: 175.00 },
-            { gueltig_ab: '2024-06-01', preis: 189.00 }
+            { gueltig_ab: '2024-06-01', preis: 189.00 },
+            { gueltig_ab: '2025-12-01', preis: 197.00 }  // Jahresabschluss-Erhöhung +4.2 %
         ],
         verkaufspreise: [
             { gueltig_ab: '2023-01-01', preis: 289.00 },
@@ -1456,7 +1631,8 @@ const ARTIKEL = [
         verkaufspreise: [
             { gueltig_ab: '2023-01-01', preis: 1299.00 },
             { gueltig_ab: '2024-01-01', preis: 1349.00 },
-            { gueltig_ab: '2025-01-01', preis: 1399.00 }
+            { gueltig_ab: '2025-01-01', preis: 1399.00 },
+            { gueltig_ab: '2025-12-01', preis: 1449.00 }  // Premiumanpassung zum Jahreswechsel +3.6 %
         ]
     },
 
@@ -1991,6 +2167,7 @@ function dashboard() {
         kpiCollapsed: false,
         kpiCards: [false, false, false, false, false],
         sectionCollapsed: { insights: false, trend: false, kategorie: false, ranking: false, topflop: false },
+        showTooltips: true,
 
         // Filters
         dateStart: '2023-01-01',
@@ -2044,6 +2221,7 @@ function dashboard() {
                     activeQuickFilter:  this.activeQuickFilter,
                     kpiCards:           this.kpiCards,
                     sectionCollapsed:   this.sectionCollapsed,
+                    showTooltips:       this.showTooltips,
                 }));
             } catch(e) {}
         },
@@ -2065,6 +2243,7 @@ function dashboard() {
                 if (saved.activeQuickFilter)  this.activeQuickFilter  = saved.activeQuickFilter;
                 if (Array.isArray(saved.kpiCards) && saved.kpiCards.length === 5) this.kpiCards = saved.kpiCards;
                 if (saved.sectionCollapsed && typeof saved.sectionCollapsed === 'object') this.sectionCollapsed = { ...this.sectionCollapsed, ...saved.sectionCollapsed };
+                if (saved.showTooltips != null) this.showTooltips = saved.showTooltips;
             } catch(e) {}
         },
 
